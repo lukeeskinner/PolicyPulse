@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Cpu, FlaskConical, Map as MapIcon, Users2 } from "lucide-react";
 import { PulseMark, PulseLine } from "@/components/Brand";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { AgentDrawer } from "@/components/AgentDrawer";
 import { AgentGrid } from "@/components/AgentGrid";
 import { EventTicker } from "@/components/EventTicker";
@@ -62,7 +63,7 @@ function SimulateDashboard() {
           <Link href="/" className="flex items-center gap-3 group">
             <PulseMark className="w-9 h-9" live={active} />
             <div>
-              <h1 className="font-display text-base font-semibold tracking-tight text-slate-50 leading-none group-hover:text-white">
+              <h1 className="font-display text-base font-semibold tracking-tight text-slate-50 leading-none group-hover:text-slate-50">
                 Policy<span className="text-signal-bright">Pulse</span> <span className="text-slate-600 font-normal">/ Simulator</span>
               </h1>
               <p className="eyebrow mt-1.5">Stress-test a bill on a digital twin</p>
@@ -82,6 +83,7 @@ function SimulateDashboard() {
             >
               <FlaskConical className="w-3.5 h-3.5" /> Validation
             </Link>
+            <ThemeToggle />
           </div>
         </div>
         <PulseLine width={2000} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />

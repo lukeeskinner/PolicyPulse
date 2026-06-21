@@ -8,6 +8,7 @@ import { ArcLayer } from "@deck.gl/layers";
 import type { MapMouseEvent } from "mapbox-gl";
 import { AlertTriangle, Check, Crosshair, Landmark, Loader2, MapPin } from "lucide-react";
 import type { PolicyArc, PolicyMarker, PulseGeo, UserArea } from "@/lib/civic";
+import { useTheme } from "./ThemeProvider";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -56,6 +57,9 @@ interface PulseMapProps {
 
 export function PulseMap({ geo, area, selectedId, onSelect, onPointToLocate }: PulseMapProps) {
   const mapRef = useRef<MapRef | null>(null);
+  const { theme } = useTheme();
+  const mapStyle =
+    theme === "light" ? "mapbox://styles/mapbox/light-v11" : "mapbox://styles/mapbox/dark-v11";
 
   // Dwell-to-locate only makes sense with a real hover-capable pointer; on
   // touch/coarse devices we gracefully skip it and lean on search. Computed
@@ -187,7 +191,7 @@ export function PulseMap({ geo, area, selectedId, onSelect, onPointToLocate }: P
         ref={mapRef}
         mapboxAccessToken={TOKEN}
         initialViewState={{ longitude: -96, latitude: 38.5, zoom: 3.2, pitch: 45, bearing: -8 }}
-        mapStyle="mapbox://styles/mapbox/dark-v11"
+        mapStyle={mapStyle}
         projection={{ name: "mercator" }}
         attributionControl={false}
         reuseMaps
@@ -247,14 +251,14 @@ function DwellReticle({ x, y, status }: { x: number; y: number; status: DwellSta
       style={{ left: x, top: y, transform: "translate(-50%, -50%)" }}
     >
       <svg width="48" height="48" viewBox="0 0 48 48" className="overflow-visible">
-        <circle cx="24" cy="24" r={R} fill="none" stroke="rgba(159,176,255,0.18)" strokeWidth="2" />
+        <circle cx="24" cy="24" r={R} fill="none" style={{ stroke: "var(--color-signal)", opacity: 0.22 }} strokeWidth="2" />
         {status === "dwelling" ? (
           <circle
             cx="24"
             cy="24"
             r={R}
             fill="none"
-            stroke="#9fb0ff"
+            style={{ stroke: "var(--color-signal-bright)" }}
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeDasharray={C}
@@ -262,13 +266,15 @@ function DwellReticle({ x, y, status }: { x: number; y: number; status: DwellSta
             className="pp-dwell-ring"
           />
         ) : (
-          <circle cx="24" cy="24" r={R} fill="none" stroke="#9fb0ff" strokeWidth="2.5" className="pp-pulse" />
+          <circle cx="24" cy="24" r={R} fill="none" style={{ stroke: "var(--color-signal-bright)" }} strokeWidth="2.5" className="pp-pulse" />
         )}
         {/* crosshair ticks */}
-        <line x1="24" y1="2" x2="24" y2="9" stroke="#9fb0ff" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="24" y1="39" x2="24" y2="46" stroke="#9fb0ff" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="2" y1="24" x2="9" y2="24" stroke="#9fb0ff" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="39" y1="24" x2="46" y2="24" stroke="#9fb0ff" strokeWidth="1.5" strokeLinecap="round" />
+        <g style={{ stroke: "var(--color-signal-bright)" }} strokeWidth="1.5" strokeLinecap="round">
+          <line x1="24" y1="2" x2="24" y2="9" />
+          <line x1="24" y1="39" x2="24" y2="46" />
+          <line x1="2" y1="24" x2="9" y2="24" />
+          <line x1="39" y1="24" x2="46" y2="24" />
+        </g>
       </svg>
       <span className="absolute inset-0 flex items-center justify-center">
         <span className="w-1.5 h-1.5 rounded-full bg-signal-bright shadow-[0_0_10px_rgba(159,176,255,0.95)]" />
@@ -278,14 +284,12 @@ function DwellReticle({ x, y, status }: { x: number; y: number; status: DwellSta
 }
 
 function ScanPill({ status, label }: { status: DwellStatus; label: string }) {
+  // Border carries the semantic tone; the label stays neutral (text-slate-100)
+  // so it reads on both the dark and the light glass.
   const tone =
-    status === "done"
-      ? "border-emerald-400/40 text-emerald-100"
-      : status === "error"
-        ? "border-amber-400/40 text-amber-100"
-        : "border-signal/40 text-slate-100";
+    status === "done" ? "border-emerald-400/40" : status === "error" ? "border-amber-400/40" : "border-signal/40";
   return (
-    <div className={`pp-pop glass rounded-full border ${tone} pl-2.5 pr-3 py-1.5 flex items-center gap-2 shadow-lg`}>
+    <div className={`pp-pop glass rounded-full border ${tone} text-slate-100 pl-2.5 pr-3 py-1.5 flex items-center gap-2 shadow-lg`}>
       <span className="flex items-center justify-center w-4 h-4 shrink-0">
         {status === "dwelling" && <Crosshair className="w-4 h-4 text-signal-bright" />}
         {status === "scanning" && <Loader2 className="w-4 h-4 text-signal-bright animate-spin" />}

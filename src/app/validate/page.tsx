@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowLeft, ArrowUp, ExternalLink, FlaskConical, Minus, Play } from "lucide-react";
 import { PulseLine } from "@/components/Brand";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import type { ActualMetric, HistoricalCase } from "@/lib/historical";
 import { cn } from "@/lib/utils";
 
@@ -42,9 +43,12 @@ export default function ValidatePage() {
           <Link href="/" className="flex items-center gap-2 text-sm text-slate-300 hover:text-signal-bright transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to dashboard
           </Link>
-          <div className="flex items-center gap-2 text-slate-200">
-            <FlaskConical className="w-4 h-4 text-signal" />
-            <span className="font-display text-sm font-semibold text-slate-100">Historical validation</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-slate-200">
+              <FlaskConical className="w-4 h-4 text-signal" />
+              <span className="font-display text-sm font-semibold text-slate-100">Historical validation</span>
+            </div>
+            <ThemeToggle />
           </div>
         </div>
         <PulseLine width={1400} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />

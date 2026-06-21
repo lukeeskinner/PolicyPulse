@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowRight, Crosshair, Landmark, Loader2, Radar, Search } from "lucide-react";
 import { PulseMark, PulseLine } from "@/components/Brand";
 import { LocationBadge } from "@/components/LocationBadge";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { NewsRail } from "@/components/NewsRail";
 import { PolicyDetail } from "@/components/PolicyDetail";
 import type { Bill, LocationError, SourceState, UserArea } from "@/lib/civic";
@@ -68,6 +69,7 @@ export default function Home() {
             >
               Open simulator <ArrowRight className="w-3.5 h-3.5" />
             </Link>
+            <ThemeToggle />
           </div>
         </div>
         <PulseLine width={2000} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />
@@ -159,7 +161,7 @@ function LocatePrompt({
         {error && (
           <div className="flex items-start gap-2 text-left mt-3 rounded-lg border border-amber-400/30 bg-amber-400/5 px-3 py-2">
             <AlertTriangle className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
-            <p className="text-[12px] leading-relaxed text-amber-100/90">{error.message}</p>
+            <p className="text-[12px] leading-relaxed text-amber-300">{error.message}</p>
           </div>
         )}
 
