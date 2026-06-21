@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Crosshair, Landmark, Loader2, Radar, Search } from "lucide-react";
+import { ArrowRight, Crosshair, FlaskRound, Ghost, Landmark, Layers, Loader2, Radar, Search } from "lucide-react";
 import { PulseMark, PulseLine } from "@/components/Brand";
 import { LocationBadge } from "@/components/LocationBadge";
 import { NewsRail } from "@/components/NewsRail";
@@ -61,6 +61,24 @@ export default function Home() {
               onSearch={search}
               onUseLocation={locate}
             />
+            <Link
+              href="/ghost"
+              className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"
+            >
+              <Ghost className="w-3.5 h-3.5" /> Ghost Protocol
+            </Link>
+            <Link
+              href="/lab"
+              className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"
+            >
+              <Layers className="w-3.5 h-3.5" /> Lab
+            </Link>
+            <Link
+              href="/runs"
+              className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"
+            >
+              <FlaskRound className="w-3.5 h-3.5" /> Runs
+            </Link>
             <Link
               href="/simulate"
               className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"

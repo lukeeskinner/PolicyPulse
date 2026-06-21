@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Cpu, FlaskConical, Map as MapIcon, Users2 } from "lucide-react";
+import { Check, Cpu, FlaskConical, FlaskRound, Ghost, Layers, Link2, Map as MapIcon, Users2 } from "lucide-react";
 import { PulseMark, PulseLine } from "@/components/Brand";
 import { AgentDrawer } from "@/components/AgentDrawer";
 import { AgentGrid } from "@/components/AgentGrid";
@@ -25,18 +25,29 @@ export default function SimulatePage() {
 }
 
 function SimulateDashboard() {
-  const { state, start, reset } = useSimulation();
+  const { state, start, reset, loadSnapshot } = useSimulation();
   const [selected, setSelected] = useState<string | null>(null);
   const params = useSearchParams();
   const bridged = useRef(false);
+  const loaded = useRef(false);
 
   // Bridge: a real bill clicked on the Pulse Map arrives as query params and
   // auto-runs against a Census-grounded population for that state.
   const initialPolicy = params.get("policy") ?? undefined;
   const initialJurisdiction = params.get("jurisdiction") ?? params.get("label") ?? undefined;
 
+  // Shareable permalink: ?runId=… cold-loads a finished run's snapshot.
+  useEffect(() => {
+    if (loaded.current) return;
+    const runId = params.get("runId");
+    if (!runId) return;
+    loaded.current = true;
+    void loadSnapshot(runId);
+  }, [params, loadSnapshot]);
+
   useEffect(() => {
     if (bridged.current) return;
+    if (params.get("runId")) return; // a shared run takes precedence
     const policy = params.get("policy");
     if (!policy) return;
     bridged.current = true;
@@ -68,20 +79,14 @@ function SimulateDashboard() {
               <p className="eyebrow mt-1.5">Stress-test a bill on a digital twin</p>
             </div>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <PhasePill phase={state.phase} status={state.status} round={state.currentRound} />
-            <Link
-              href="/"
-              className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"
-            >
-              <MapIcon className="w-3.5 h-3.5" /> Pulse Map
-            </Link>
-            <Link
-              href="/validate"
-              className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"
-            >
-              <FlaskConical className="w-3.5 h-3.5" /> Validation
-            </Link>
+            {state.status === "complete" && state.runId && <ShareRunButton runId={state.runId} />}
+            <NavPill href="/" icon={<MapIcon className="w-3.5 h-3.5" />} label="Pulse Map" />
+            <NavPill href="/ghost" icon={<Ghost className="w-3.5 h-3.5" />} label="Ghost" />
+            <NavPill href="/lab" icon={<Layers className="w-3.5 h-3.5" />} label="Lab" />
+            <NavPill href="/runs" icon={<FlaskRound className="w-3.5 h-3.5" />} label="Runs" />
+            <NavPill href="/validate" icon={<FlaskConical className="w-3.5 h-3.5" />} label="Validation" />
           </div>
         </div>
         <PulseLine width={2000} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />
@@ -125,6 +130,46 @@ function SimulateDashboard() {
 
       <AgentDrawer runId={state.runId} agentId={selected} onClose={() => setSelected(null)} />
     </div>
+  );
+}
+
+function NavPill({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"
+    >
+      {icon} {label}
+    </Link>
+  );
+}
+
+function ShareRunButton({ runId }: { runId: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    const url = `${window.location.origin}/simulate?runId=${runId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      /* clipboard blocked; fall through to the visual confirmation anyway */
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
+  return (
+    <button
+      onClick={copy}
+      title="Copy a shareable link to this run"
+      className={cn(
+        "flex items-center gap-1.5 text-xs rounded-full px-3 py-1.5 border transition-colors",
+        copied
+          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+          : "border-line text-slate-300 hover:text-signal-bright hover:border-signal/50",
+      )}
+    >
+      {copied ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
+      {copied ? "Link copied" : "Share"}
+    </button>
   );
 }
 

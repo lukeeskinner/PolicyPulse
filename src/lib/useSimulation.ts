@@ -1,21 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type {
-  Analysis,
-  CascadeRecord,
-  DemographicProfile,
-  Outcome,
-  PolicyModel,
-  PublicAgent,
-  RoundDef,
-  RoundMetrics,
-  RunMeta,
-  RunSnapshot,
-  SimEvent,
-  SimRequest,
-  SourceRef,
-  AgentState,
+import {
+  ROUNDS,
+  type Analysis,
+  type CascadeRecord,
+  type DemographicProfile,
+  type Outcome,
+  type PolicyModel,
+  type PublicAgent,
+  type RoundDef,
+  type RoundMetrics,
+  type RunMeta,
+  type RunSnapshot,
+  type SimEvent,
+  type SimRequest,
+  type SourceRef,
+  type AgentState,
 } from "./types";
 
 export type Phase =
@@ -253,6 +254,56 @@ export function useSimulation() {
     [commit],
   );
 
+  // Cold-load a finished run from its snapshot (shareable permalink). Unlike
+  // hydrateSnapshot, this rebuilds the whole view (agents included) from the
+  // persisted snapshot rather than assuming a live stream populated it first.
+  const loadSnapshot = useCallback(
+    async (runId: string): Promise<boolean> => {
+      if (esRef.current) esRef.current.close();
+      esRef.current = null;
+      try {
+        const res = await fetch(`/api/run/${runId}`);
+        if (!res.ok) return false;
+        const snap: RunSnapshot = await res.json();
+
+        const draft = clone(INITIAL);
+        draft.status = "complete";
+        draft.phase = "done";
+        draft.runId = runId;
+        draft.meta = snap.meta;
+        draft.policyModel = snap.policyModel;
+        draft.profile = snap.profile;
+        draft.sources = snap.profile?.sources ?? [];
+        draft.rounds = ROUNDS;
+        draft.metrics = snap.metricsByRound ?? [];
+        draft.cascades = snap.cascades ?? [];
+        draft.analysis = snap.analysis;
+        draft.snapshot = snap;
+
+        const recById = new Map(snap.agents.map((a) => [a.persona.id, a]));
+        draft.agentIndex = {};
+        draft.agents = snap.publicAgents.map((pa, i) => {
+          draft.agentIndex[pa.id] = i;
+          const rec = recById.get(pa.id);
+          return {
+            ...pa,
+            lastFlags: rec?.current.flags ?? [],
+            state: rec?.current,
+            outcome: rec?.outcome,
+            impactScore: rec?.impactScore,
+          };
+        });
+        draft.total = snap.meta.agentCount || draft.agents.length;
+        draft.spawned = draft.agents.length;
+        commit(draft);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [commit],
+  );
+
   const reset = useCallback(() => {
     if (esRef.current) esRef.current.close();
     esRef.current = null;
@@ -320,5 +371,5 @@ export function useSimulation() {
     };
   }, []);
 
-  return { state, start, reset };
+  return { state, start, reset, loadSnapshot };
 }
