@@ -1,12 +1,14 @@
 "use client";
 
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Map, { Marker, useControl, type MapRef } from "react-map-gl/mapbox";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { ArcLayer } from "@deck.gl/layers";
-import { MapPin, Landmark } from "lucide-react";
+import type { MapMouseEvent } from "mapbox-gl";
+import { AlertTriangle, Check, Crosshair, Landmark, Loader2, MapPin } from "lucide-react";
 import type { PolicyArc, PolicyMarker, PulseGeo, UserArea } from "@/lib/civic";
+import { useTheme } from "./ThemeProvider";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -27,15 +29,129 @@ function DeckOverlay(props: OverlayProps) {
   return null;
 }
 
+// --- "Point to locate" dwell tuning ----------------------------------------
+const DWELL_MS = 800; // how long the cursor must hold still before scanning
+const MOVE_THRESHOLD = 10; // px of drift (from the dwell anchor) that cancels it
+const DONE_HOLD_MS = 1800; // how long the "Area set" confirmation lingers
+const ERROR_HOLD_MS = 2800;
+
+type DwellStatus = "dwelling" | "scanning" | "done" | "error";
+interface DwellState {
+  status: DwellStatus;
+  label: string;
+}
+
+function shortLabel(a: UserArea): string {
+  return a.city ? `${a.city}, ${a.regionCode}` : a.region;
+}
+
 interface PulseMapProps {
   geo: PulseGeo;
   area: UserArea | null;
   selectedId: string | null;
   onSelect: (marker: PolicyMarker | null) => void;
+  // Reverse-geocode a map point and set the area; returns the resolved area
+  // (or null). Centralised in usePulse so the component owns no Mapbox logic.
+  onPointToLocate?: (lat: number, lng: number) => Promise<UserArea | null>;
 }
 
-export function PulseMap({ geo, area, selectedId, onSelect }: PulseMapProps) {
+export function PulseMap({ geo, area, selectedId, onSelect, onPointToLocate }: PulseMapProps) {
   const mapRef = useRef<MapRef | null>(null);
+  const { theme } = useTheme();
+  const mapStyle =
+    theme === "light" ? "mapbox://styles/mapbox/light-v11" : "mapbox://styles/mapbox/dark-v11";
+
+  // Dwell-to-locate only makes sense with a real hover-capable pointer; on
+  // touch/coarse devices we gracefully skip it and lean on search. Computed
+  // lazily so it runs client-side without a setState-in-effect.
+  const [hoverCapable] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(hover: hover) and (pointer: fine)").matches,
+  );
+  const canDwell = hoverCapable && !!onPointToLocate;
+
+  const [reticle, setReticle] = useState<{ x: number; y: number } | null>(null);
+  const [dwell, setDwell] = useState<DwellState | null>(null);
+
+  const dwellTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const anchor = useRef<{ x: number; y: number } | null>(null);
+  const coord = useRef<{ lat: number; lng: number } | null>(null);
+  const scanSeq = useRef(0); // bumps on every move/scan so stale results are ignored
+
+  const clearDwellTimer = useCallback(() => {
+    if (dwellTimer.current) {
+      clearTimeout(dwellTimer.current);
+      dwellTimer.current = null;
+    }
+  }, []);
+
+  const scheduleDismiss = useCallback((ms: number) => {
+    if (dismissTimer.current) clearTimeout(dismissTimer.current);
+    dismissTimer.current = setTimeout(() => {
+      setDwell(null);
+      setReticle(null);
+    }, ms);
+  }, []);
+
+  // Fires once the cursor has held still for DWELL_MS.
+  const runScan = useCallback(async () => {
+    const c = coord.current;
+    if (!c || !onPointToLocate) return;
+    const seq = ++scanSeq.current;
+    setDwell({ status: "scanning", label: "Scanning this area\u2026" });
+    const resolved = await onPointToLocate(c.lat, c.lng);
+    if (scanSeq.current !== seq) return; // superseded by a newer dwell — ignore
+    if (resolved) {
+      setReticle(null);
+      setDwell({ status: "done", label: `Area set: ${shortLabel(resolved)}` });
+      scheduleDismiss(DONE_HOLD_MS);
+    } else {
+      setDwell({ status: "error", label: "Couldn\u2019t read that spot \u2014 search instead" });
+      scheduleDismiss(ERROR_HOLD_MS);
+    }
+  }, [onPointToLocate, scheduleDismiss]);
+
+  const handleMove = useCallback(
+    (e: MapMouseEvent) => {
+      if (!canDwell) return;
+      const { x, y } = e.point;
+      const a = anchor.current;
+      // Only react to meaningful movement (measured from the dwell anchor, so
+      // slow drift accumulates correctly) — never geocode on every mouse move.
+      if (a && Math.hypot(x - a.x, y - a.y) <= MOVE_THRESHOLD) return;
+
+      clearDwellTimer();
+      if (dismissTimer.current) clearTimeout(dismissTimer.current);
+      scanSeq.current++; // invalidate any in-flight scan / lingering confirmation
+      anchor.current = { x, y };
+      coord.current = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+      setReticle({ x, y });
+      setDwell({ status: "dwelling", label: "Hold still to scan this area" });
+      dwellTimer.current = setTimeout(runScan, DWELL_MS);
+    },
+    [canDwell, clearDwellTimer, runScan],
+  );
+
+  // Leaving the map cancels an in-progress dwell, but lets a finished
+  // confirmation linger (it auto-dismisses on its own timer).
+  const handleLeave = useCallback(() => {
+    clearDwellTimer();
+    anchor.current = null;
+    setReticle(null);
+    setDwell((d) => (d && (d.status === "done" || d.status === "error") ? d : null));
+    scanSeq.current++;
+  }, [clearDwellTimer]);
+
+  useEffect(
+    () => () => {
+      if (dwellTimer.current) clearTimeout(dwellTimer.current);
+      if (dismissTimer.current) clearTimeout(dismissTimer.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (area && mapRef.current) {
@@ -75,11 +191,13 @@ export function PulseMap({ geo, area, selectedId, onSelect }: PulseMapProps) {
         ref={mapRef}
         mapboxAccessToken={TOKEN}
         initialViewState={{ longitude: -96, latitude: 38.5, zoom: 3.2, pitch: 45, bearing: -8 }}
-        mapStyle="mapbox://styles/mapbox/dark-v11"
+        mapStyle={mapStyle}
         projection={{ name: "mercator" }}
         attributionControl={false}
         reuseMaps
         onClick={() => onSelect(null)}
+        onMouseMove={handleMove}
+        onMouseOut={handleLeave}
         style={{ width: "100%", height: "100%" }}
       >
         <DeckOverlay interleaved={false} layers={layers} />
@@ -109,7 +227,85 @@ export function PulseMap({ geo, area, selectedId, onSelect }: PulseMapProps) {
         ))}
       </Map>
 
+      {/* Dwell reticle — a crosshair + a ring that fills over the dwell window. */}
+      {reticle && dwell && (dwell.status === "dwelling" || dwell.status === "scanning") && (
+        <DwellReticle x={reticle.x} y={reticle.y} status={dwell.status} />
+      )}
+
+      {/* Single top-center message slot: scan status if active, else the ambient hint. */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-max max-w-[calc(100%-1.5rem)]">
+        {dwell ? <ScanPill status={dwell.status} label={dwell.label} /> : canDwell ? <PointHint /> : null}
+      </div>
+
       <MapLegend />
+    </div>
+  );
+}
+
+function DwellReticle({ x, y, status }: { x: number; y: number; status: DwellStatus }) {
+  const R = 18;
+  const C = 2 * Math.PI * R;
+  return (
+    <div
+      className="absolute z-20 pointer-events-none pp-pop"
+      style={{ left: x, top: y, transform: "translate(-50%, -50%)" }}
+    >
+      <svg width="48" height="48" viewBox="0 0 48 48" className="overflow-visible">
+        <circle cx="24" cy="24" r={R} fill="none" style={{ stroke: "var(--color-signal)", opacity: 0.22 }} strokeWidth="2" />
+        {status === "dwelling" ? (
+          <circle
+            cx="24"
+            cy="24"
+            r={R}
+            fill="none"
+            style={{ stroke: "var(--color-signal-bright)" }}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeDasharray={C}
+            transform="rotate(-90 24 24)"
+            className="pp-dwell-ring"
+          />
+        ) : (
+          <circle cx="24" cy="24" r={R} fill="none" style={{ stroke: "var(--color-signal-bright)" }} strokeWidth="2.5" className="pp-pulse" />
+        )}
+        {/* crosshair ticks */}
+        <g style={{ stroke: "var(--color-signal-bright)" }} strokeWidth="1.5" strokeLinecap="round">
+          <line x1="24" y1="2" x2="24" y2="9" />
+          <line x1="24" y1="39" x2="24" y2="46" />
+          <line x1="2" y1="24" x2="9" y2="24" />
+          <line x1="39" y1="24" x2="46" y2="24" />
+        </g>
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center">
+        <span className="w-1.5 h-1.5 rounded-full bg-signal-bright shadow-[0_0_10px_rgba(159,176,255,0.95)]" />
+      </span>
+    </div>
+  );
+}
+
+function ScanPill({ status, label }: { status: DwellStatus; label: string }) {
+  // Border carries the semantic tone; the label stays neutral (text-slate-100)
+  // so it reads on both the dark and the light glass.
+  const tone =
+    status === "done" ? "border-emerald-400/40" : status === "error" ? "border-amber-400/40" : "border-signal/40";
+  return (
+    <div className={`pp-pop glass rounded-full border ${tone} text-slate-100 pl-2.5 pr-3 py-1.5 flex items-center gap-2 shadow-lg`}>
+      <span className="flex items-center justify-center w-4 h-4 shrink-0">
+        {status === "dwelling" && <Crosshair className="w-4 h-4 text-signal-bright" />}
+        {status === "scanning" && <Loader2 className="w-4 h-4 text-signal-bright animate-spin" />}
+        {status === "done" && <Check className="w-4 h-4 text-emerald-300" />}
+        {status === "error" && <AlertTriangle className="w-4 h-4 text-amber-300" />}
+      </span>
+      <span className="text-[12px] font-medium whitespace-nowrap">{label}</span>
+    </div>
+  );
+}
+
+function PointHint() {
+  return (
+    <div className="glass rounded-full border border-line/80 px-3 py-1.5 flex items-center gap-2 opacity-80">
+      <Crosshair className="w-3.5 h-3.5 text-signal-bright" />
+      <span className="text-[11px] text-slate-300 whitespace-nowrap">Point anywhere to scan local policy</span>
     </div>
   );
 }

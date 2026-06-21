@@ -123,7 +123,7 @@ export function PolicyConsole({ onRun, onReset, status, initialPolicy, initialJu
         <button
           onClick={onReset}
           disabled={running}
-          className="rounded-xl px-3 py-2.5 border border-line text-slate-300 hover:text-white hover:border-slate-500 transition-colors disabled:opacity-40"
+          className="rounded-xl px-3 py-2.5 border border-line text-slate-300 hover:text-slate-50 hover:border-slate-500 transition-colors disabled:opacity-40"
           title="Reset"
         >
           <RotateCcw className="w-4 h-4" />

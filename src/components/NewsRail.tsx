@@ -70,7 +70,7 @@ function NewsItem({ article }: { article: NewsArticle }) {
         <span>{timeAgo(article.publishedAt)}</span>
         <ExternalLink className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
-      <h3 className="font-serif-editorial text-[15px] leading-snug text-slate-100 group-hover:text-white">
+      <h3 className="font-serif-editorial text-[15px] leading-snug text-slate-100 group-hover:text-slate-50">
         {article.title}
       </h3>
       {article.description && (

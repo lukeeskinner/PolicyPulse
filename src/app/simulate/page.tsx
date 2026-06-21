@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Check, Cpu, FlaskConical, FlaskRound, Ghost, Layers, Link2, Map as MapIcon, Users2 } from "lucide-react";
 import { PulseMark, PulseLine } from "@/components/Brand";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { AgentDrawer } from "@/components/AgentDrawer";
 import { AgentGrid } from "@/components/AgentGrid";
 import { ContactRep } from "@/components/ContactRep";
@@ -83,7 +84,7 @@ function SimulateDashboard() {
           <Link href="/" className="flex items-center gap-3 group">
             <PulseMark className="w-9 h-9" live={active} />
             <div>
-              <h1 className="font-display text-base font-semibold tracking-tight text-slate-50 leading-none group-hover:text-white">
+              <h1 className="font-display text-base font-semibold tracking-tight text-slate-50 leading-none group-hover:text-slate-50">
                 Policy<span className="text-signal-bright">Pulse</span> <span className="text-slate-600 font-normal">/ Simulator</span>
               </h1>
               <p className="eyebrow mt-1.5">Stress-test a bill on a digital twin</p>
@@ -97,6 +98,7 @@ function SimulateDashboard() {
             <NavPill href="/lab" icon={<Layers className="w-3.5 h-3.5" />} label="Lab" />
             <NavPill href="/runs" icon={<FlaskRound className="w-3.5 h-3.5" />} label="Runs" />
             <NavPill href="/validate" icon={<FlaskConical className="w-3.5 h-3.5" />} label="Validation" />
+            <ThemeToggle />
           </div>
         </div>
         <PulseLine width={2000} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />

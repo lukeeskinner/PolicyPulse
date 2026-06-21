@@ -71,8 +71,8 @@ export function MetricsTimeline({ metrics, rounds, currentRound, status }: Props
               <XAxis dataKey="label" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis domain={[0, 100]} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ background: "#14171f", border: "1px solid #272c38", borderRadius: 12, fontSize: 12 }}
-                labelStyle={{ color: "#e2e8f0" }}
+                contentStyle={{ background: "var(--color-surface)", border: "1px solid var(--color-line)", borderRadius: 12, fontSize: 12 }}
+                labelStyle={{ color: "var(--body-fg)" }}
               />
               <Line type="monotone" dataKey="wellbeing" name="Wellbeing" stroke="#6e8bff" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="burden" name="Rent burden %" stroke="#fb7185" strokeWidth={2} dot={false} />

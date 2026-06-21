@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
+
+// Applied before paint so there's no flash and no hydration mismatch: dark is
+// the default, a stored choice wins, otherwise we respect the system setting.
+const themeScript = `(function(){try{var t=localStorage.getItem('pp-theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
 
 const display = Space_Grotesk({
   variable: "--font-grotesk",
@@ -39,9 +44,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${display.variable} ${sans.variable} ${serif.variable} ${mono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowLeft, ArrowUp, ExternalLink, FlaskConical, FlaskRound, Layers, Minus, Play } from "lucide-react";
 import { PulseLine } from "@/components/Brand";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import type { ActualMetric, HistoricalCase } from "@/lib/historical";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +54,7 @@ export default function ValidatePage() {
               <FlaskConical className="w-4 h-4 text-signal" />
               <span className="font-display text-sm font-semibold text-slate-100">Historical validation</span>
             </div>
+            <ThemeToggle />
           </div>
         </div>
         <PulseLine width={1400} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />

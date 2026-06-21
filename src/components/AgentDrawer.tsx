@@ -71,7 +71,7 @@ export function AgentDrawer({ runId, agentId, onClose }: Props) {
                     )}
                   </div>
                 </div>
-                <button onClick={onClose} className="text-slate-400 hover:text-white p-1">
+                <button onClick={onClose} className="text-slate-400 hover:text-slate-50 p-1">
                   <X className="w-5 h-5" />
                 </button>
               </div>
