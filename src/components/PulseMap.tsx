@@ -8,7 +8,6 @@ import { ArcLayer } from "@deck.gl/layers";
 import type { MapMouseEvent } from "mapbox-gl";
 import { AlertTriangle, Check, Crosshair, Landmark, Loader2, MapPin } from "lucide-react";
 import type { PolicyArc, PolicyMarker, PulseGeo, UserArea } from "@/lib/civic";
-import { useTheme } from "./ThemeProvider";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -57,9 +56,8 @@ interface PulseMapProps {
 
 export function PulseMap({ geo, area, selectedId, onSelect, onPointToLocate }: PulseMapProps) {
   const mapRef = useRef<MapRef | null>(null);
-  const { theme } = useTheme();
-  const mapStyle =
-    theme === "light" ? "mapbox://styles/mapbox/light-v11" : "mapbox://styles/mapbox/dark-v11";
+  // The map stays dark in both themes — it reads as a live "instrument" panel
+  // and avoids a style reload (and its transient fetch) on every theme toggle.
 
   // Dwell-to-locate only makes sense with a real hover-capable pointer; on
   // touch/coarse devices we gracefully skip it and lean on search. Computed
@@ -191,7 +189,7 @@ export function PulseMap({ geo, area, selectedId, onSelect, onPointToLocate }: P
         ref={mapRef}
         mapboxAccessToken={TOKEN}
         initialViewState={{ longitude: -96, latitude: 38.5, zoom: 3.2, pitch: 45, bearing: -8 }}
-        mapStyle={mapStyle}
+        mapStyle="mapbox://styles/mapbox/dark-v11"
         projection={{ name: "mercator" }}
         attributionControl={false}
         reuseMaps
