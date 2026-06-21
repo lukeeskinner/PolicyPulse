@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Activity, Cpu, FlaskConical, Map as MapIcon, Users2 } from "lucide-react";
+import { Cpu, FlaskConical, Map as MapIcon, Users2 } from "lucide-react";
+import { PulseMark, PulseLine } from "@/components/Brand";
 import { AgentDrawer } from "@/components/AgentDrawer";
 import { AgentGrid } from "@/components/AgentGrid";
 import { EventTicker } from "@/components/EventTicker";
@@ -56,35 +57,34 @@ function SimulateDashboard() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-slate-800/70 backdrop-blur sticky top-0 z-30 bg-[#05070e]/80">
+      <header className="relative border-b border-line backdrop-blur sticky top-0 z-30 bg-ink/80">
         <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-slate-900" />
-            </div>
+            <PulseMark className="w-9 h-9" live={active} />
             <div>
-              <h1 className="font-display text-base font-bold tracking-tight text-slate-50 leading-none group-hover:text-white">
-                PolicyPulse <span className="text-slate-500 font-normal">/ Simulator</span>
+              <h1 className="font-display text-base font-semibold tracking-tight text-slate-50 leading-none group-hover:text-white">
+                Policy<span className="text-signal-bright">Pulse</span> <span className="text-slate-600 font-normal">/ Simulator</span>
               </h1>
-              <p className="text-[11px] text-slate-400 mt-0.5">Stress-test a bill on a digital twin of the population</p>
+              <p className="eyebrow mt-1.5">Stress-test a bill on a digital twin</p>
             </div>
           </Link>
           <div className="flex items-center gap-3">
             <PhasePill phase={state.phase} status={state.status} round={state.currentRound} />
             <Link
               href="/"
-              className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-cyan-200 border border-slate-700/70 hover:border-cyan-500/50 rounded-full px-3 py-1.5 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"
             >
               <MapIcon className="w-3.5 h-3.5" /> Pulse Map
             </Link>
             <Link
               href="/validate"
-              className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-cyan-200 border border-slate-700/70 hover:border-cyan-500/50 rounded-full px-3 py-1.5 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"
             >
               <FlaskConical className="w-3.5 h-3.5" /> Validation
             </Link>
           </div>
         </div>
+        <PulseLine width={2000} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />
       </header>
 
       <main className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 pb-20">
@@ -133,7 +133,7 @@ function PhasePill({ phase, status, round }: { phase: string; status: string; ro
   const label = phase === "simulating" && round >= 0 ? `${PHASE_LABEL[phase]}` : PHASE_LABEL[phase] ?? "";
   const done = status === "complete";
   return (
-    <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full text-xs border", done ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-cyan-500/40 bg-cyan-500/10 text-cyan-300")}>
+    <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full text-xs border font-data", done ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-signal/40 bg-signal/10 text-signal-bright")}>
       <Cpu className={cn("w-3.5 h-3.5", !done && "pp-pulse")} />
       {label}
     </div>
@@ -154,10 +154,10 @@ function StageCard({
     <div className="glass rounded-2xl p-5 grid-bg">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Users2 className="w-4 h-4 text-cyan-300" />
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-200">
+          <Users2 className="w-4 h-4 text-signal" />
+          <h2 className="eyebrow">
             The population
-            <span className="text-slate-500 font-normal ml-2">{state.spawned}/{state.total} residents</span>
+            <span className="font-data text-slate-500 ml-2 tracking-normal normal-case">{state.spawned}/{state.total} residents</span>
           </h2>
         </div>
         <div className="flex items-center gap-2.5 flex-wrap justify-end">
@@ -173,7 +173,7 @@ function StageCard({
       <AgentGrid agents={state.agents} total={state.total} onSelect={onSelect} selectedId={selected} />
 
       {state.status === "complete" && (
-        <div className="flex items-center gap-3 mt-4 pt-3 border-t border-slate-800/70 flex-wrap">
+        <div className="flex items-center gap-3 mt-4 pt-3 border-t border-line flex-wrap">
           {(["better", "stable", "worse", "displaced"] as const).map((o) => {
             const n = state.agents.filter((a) => a.outcome === o).length;
             return (
@@ -193,9 +193,10 @@ function StageCard({
 function IdleHero() {
   return (
     <div className="glass rounded-2xl p-8 grid-bg min-h-[360px] flex flex-col justify-center">
-      <h2 className="font-display text-2xl font-bold text-slate-100 leading-tight max-w-lg">
+      <span className="eyebrow mb-3">The digital twin</span>
+      <h2 className="font-display text-2xl font-semibold text-slate-100 leading-tight max-w-lg">
         Every policy creates winners and losers.{" "}
-        <span className="bg-gradient-to-r from-cyan-300 to-violet-300 bg-clip-text text-transparent">See them before you vote.</span>
+        <span className="font-serif-editorial italic text-signal-bright">See them before you vote.</span>
       </h2>
       <p className="text-sm text-slate-400 mt-3 max-w-xl leading-relaxed">
         PolicyPulse builds a statistically representative population from live U.S. Census data, then makes each resident live through your policy across three years. Watch second-order effects cascade — and see exactly who gets hurt.
@@ -214,7 +215,7 @@ function IdleHero() {
 function Step({ n, text }: { n: number; text: string }) {
   return (
     <li className="flex items-start gap-3">
-      <span className="w-5 h-5 rounded-full bg-cyan-500/15 text-cyan-300 text-[11px] flex items-center justify-center shrink-0 mt-0.5">{n}</span>
+      <span className="w-5 h-5 rounded-full bg-signal/15 text-signal-bright font-data text-[11px] flex items-center justify-center shrink-0 mt-0.5">{n}</span>
       <span>{text}</span>
     </li>
   );

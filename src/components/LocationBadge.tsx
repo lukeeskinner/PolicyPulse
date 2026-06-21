@@ -25,12 +25,12 @@ export function LocationBadge({ area, locating, onSearch, onUseLocation }: Locat
     <div className="flex items-center gap-2">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 text-sm text-slate-200 border border-slate-700/70 hover:border-cyan-500/50 rounded-full pl-3 pr-3 py-1.5 transition-colors"
+        className="flex items-center gap-2 text-sm text-slate-200 border border-line hover:border-signal/50 rounded-full pl-3 pr-3 py-1.5 transition-colors"
       >
         {locating ? (
-          <Loader2 className="w-3.5 h-3.5 text-cyan-300 animate-spin" />
+          <Loader2 className="w-3.5 h-3.5 text-signal-bright animate-spin" />
         ) : (
-          <MapPin className="w-3.5 h-3.5 text-cyan-300" />
+          <MapPin className="w-3.5 h-3.5 text-signal-bright" />
         )}
         <span className="font-medium">
           {locating ? "Finding you…" : area ? area.label : "Set your area"}
@@ -39,7 +39,7 @@ export function LocationBadge({ area, locating, onSearch, onUseLocation }: Locat
 
       {open && (
         <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-1.5 border border-slate-700/70 rounded-full pl-3 pr-1.5 py-1 bg-slate-900/60">
+          <div className="flex items-center gap-1.5 border border-line focus-within:border-signal/50 rounded-full pl-3 pr-1.5 py-1 bg-surface/80 transition-colors">
             <Search className="w-3.5 h-3.5 text-slate-500" />
             <input
               autoFocus
@@ -51,7 +51,7 @@ export function LocationBadge({ area, locating, onSearch, onUseLocation }: Locat
             />
             <button
               onClick={submit}
-              className="text-[11px] text-slate-950 bg-cyan-300 hover:bg-cyan-200 rounded-full px-2.5 py-1 font-medium transition-colors"
+              className="text-[11px] text-ink bg-signal hover:bg-signal-bright rounded-full px-2.5 py-1 font-medium transition-colors"
             >
               Go
             </button>
@@ -62,7 +62,7 @@ export function LocationBadge({ area, locating, onSearch, onUseLocation }: Locat
               setOpen(false);
             }}
             title="Use my location"
-            className="flex items-center justify-center w-8 h-8 border border-slate-700/70 hover:border-cyan-500/50 rounded-full text-slate-300 hover:text-cyan-200 transition-colors"
+            className="flex items-center justify-center w-8 h-8 border border-line hover:border-signal/50 rounded-full text-slate-300 hover:text-signal-bright transition-colors"
           >
             <Crosshair className="w-3.5 h-3.5" />
           </button>

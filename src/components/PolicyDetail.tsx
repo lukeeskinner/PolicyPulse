@@ -22,10 +22,10 @@ export function PolicyDetail({ marker, onClose, onSimulate }: PolicyDetailProps)
           transition={{ type: "spring", stiffness: 320, damping: 32 }}
           className="absolute top-3 left-3 bottom-3 w-[360px] max-w-[88vw] glass rounded-2xl z-20 flex flex-col overflow-hidden"
         >
-          <header className="px-4 py-3.5 border-b border-slate-800/70 flex items-start justify-between shrink-0">
+          <header className="px-4 py-3.5 border-b border-line flex items-start justify-between shrink-0">
             <div className="flex items-start gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-violet-500/15 flex items-center justify-center mt-0.5">
-                <Landmark className="w-4 h-4 text-violet-300" />
+              <div className="w-8 h-8 rounded-lg bg-signal/15 flex items-center justify-center mt-0.5">
+                <Landmark className="w-4 h-4 text-signal" />
               </div>
               <div>
                 <h2 className="font-display text-base text-slate-50 leading-tight">{marker.title}</h2>
@@ -50,9 +50,9 @@ export function PolicyDetail({ marker, onClose, onSimulate }: PolicyDetailProps)
 
 function BillCard({ bill, onSimulate }: { bill: Bill; onSimulate: (b: Bill) => void }) {
   return (
-    <div className="rounded-xl border border-slate-800/70 bg-slate-900/40 p-3 hover:border-slate-700 transition-colors">
+    <div className="rounded-xl border border-line bg-surface/40 p-3 hover:border-signal/40 transition-colors">
       <div className="flex items-center gap-2 mb-1.5">
-        <span className="font-data text-[11px] text-cyan-300 font-semibold">{bill.identifier}</span>
+        <span className="font-data text-[11px] text-signal-bright font-semibold">{bill.identifier}</span>
         <LevelBadge level={bill.level} />
         {bill.sponsorParty && <PartyChip party={bill.sponsorParty} />}
       </div>
@@ -73,7 +73,7 @@ function BillCard({ bill, onSimulate }: { bill: Bill; onSimulate: (b: Bill) => v
       <div className="flex items-center gap-2 mt-2.5">
         <button
           onClick={() => onSimulate(bill)}
-          className="flex-1 flex items-center justify-center gap-1.5 text-[12px] font-medium text-slate-950 bg-gradient-to-r from-cyan-300 to-violet-300 hover:from-cyan-200 hover:to-violet-200 rounded-lg px-3 py-1.5 transition-colors"
+          className="flex-1 flex items-center justify-center gap-1.5 text-[12px] font-medium text-ink bg-signal hover:bg-signal-bright rounded-lg px-3 py-1.5 transition-colors"
         >
           Simulate the impact <ArrowRight className="w-3.5 h-3.5" />
         </button>
@@ -82,7 +82,7 @@ function BillCard({ bill, onSimulate }: { bill: Bill; onSimulate: (b: Bill) => v
             href={bill.url}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-cyan-200 border border-slate-700/70 rounded-lg px-2.5 py-1.5 transition-colors"
+            className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-signal-bright border border-line rounded-lg px-2.5 py-1.5 transition-colors"
             title="Read the official text"
           >
             <ExternalLink className="w-3.5 h-3.5" />
@@ -97,8 +97,8 @@ function LevelBadge({ level }: { level: Bill["level"] }) {
   const fed = level === "federal";
   return (
     <span
-      className={`text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded font-semibold ${
-        fed ? "bg-violet-500/15 text-violet-300" : "bg-cyan-500/15 text-cyan-300"
+      className={`font-data text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded font-semibold ${
+        fed ? "bg-signal/15 text-signal-bright" : "bg-purple-500/15 text-purple-300"
       }`}
     >
       {fed ? "Federal" : "State"}

@@ -16,18 +16,18 @@ export function InequalitySpotlight({ analysis, byGroup, onSelectAgent }: Props)
   return (
     <div className="space-y-4">
       {/* headline */}
-      <div className="glass rounded-2xl p-5 border-l-2 border-l-cyan-400/60">
+      <div className="glass rounded-2xl p-5 border-l-2 border-l-signal/60">
         <div className="flex items-center gap-2 mb-1.5">
-          <Scale className="w-4 h-4 text-cyan-300" />
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-200">The inequality this policy creates</h2>
+          <Scale className="w-4 h-4 text-signal" />
+          <h2 className="eyebrow">The inequality this policy creates</h2>
         </div>
         <p className="text-lg font-semibold text-slate-100 leading-snug">{analysis.headline}</p>
         <p className="text-sm text-slate-400 mt-2 leading-relaxed">{analysis.summary}</p>
         <div className="flex items-center gap-2 mt-3 text-xs">
           <span className="text-slate-500">Net-resource inequality (Gini)</span>
-          <span className="text-slate-300 tabular-nums">{analysis.giniBefore.toFixed(2)}</span>
+          <span className="font-data text-slate-300 tabular-nums">{analysis.giniBefore.toFixed(2)}</span>
           <ArrowRight className="w-3 h-3 text-slate-500" />
-          <span className={cn("tabular-nums font-semibold", giniWidened ? "text-rose-400" : "text-emerald-400")}>
+          <span className={cn("font-data tabular-nums font-semibold", giniWidened ? "text-rose-400" : "text-emerald-400")}>
             {analysis.giniAfter.toFixed(2)}
           </span>
           <span className={cn("text-[11px] px-1.5 py-0.5 rounded", giniWidened ? "bg-rose-500/15 text-rose-300" : "bg-emerald-500/15 text-emerald-300")}>
@@ -39,7 +39,7 @@ export function InequalitySpotlight({ analysis, byGroup, onSelectAgent }: Props)
       <div className="grid lg:grid-cols-2 gap-4">
         {/* group impact */}
         <div className="glass rounded-2xl p-5">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-200 mb-3">Net impact by demographic</h3>
+          <h3 className="eyebrow mb-3">Net impact by demographic</h3>
           <div className="space-y-2.5">
             {byGroup.map((g) => (
               <div key={g.group} className="flex items-center gap-2">
@@ -65,7 +65,7 @@ export function InequalitySpotlight({ analysis, byGroup, onSelectAgent }: Props)
             ))}
           </div>
           {analysis.disparities.length > 0 && (
-            <div className="mt-4 space-y-2 border-t border-slate-800/80 pt-3">
+            <div className="mt-4 space-y-2 border-t border-line pt-3">
               {analysis.disparities.map((d, i) => (
                 <div key={i} className="flex gap-2 text-[12px] text-slate-300 leading-snug">
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
@@ -78,7 +78,7 @@ export function InequalitySpotlight({ analysis, byGroup, onSelectAgent }: Props)
 
         {/* who gets hurt / winners */}
         <div className="glass rounded-2xl p-5">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-200 mb-3 flex items-center gap-1.5">
+          <h3 className="eyebrow mb-3 flex items-center gap-1.5">
             <TrendingDown className="w-3.5 h-3.5 text-rose-400" /> Who gets hurt
           </h3>
           <div className="space-y-2">
@@ -89,7 +89,7 @@ export function InequalitySpotlight({ analysis, byGroup, onSelectAgent }: Props)
           </div>
           {analysis.winners.length > 0 && (
             <>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-200 mt-4 mb-2 flex items-center gap-1.5">
+              <h3 className="eyebrow mt-4 mb-2 flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> Who benefits
               </h3>
               <div className="space-y-2">
@@ -105,12 +105,12 @@ export function InequalitySpotlight({ analysis, byGroup, onSelectAgent }: Props)
       {/* unintended consequences */}
       {analysis.unintended.length > 0 && (
         <div className="glass rounded-2xl p-5">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-200 mb-3 flex items-center gap-1.5">
+          <h3 className="eyebrow mb-3 flex items-center gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> Unintended consequences
           </h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
             {analysis.unintended.map((u, i) => (
-              <div key={i} className="rounded-xl bg-slate-950/40 border border-slate-800/70 p-3">
+              <div key={i} className="rounded-xl bg-ink/40 border border-line p-3">
                 <div className="text-[12px] font-semibold text-amber-200">{u.flag}</div>
                 <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">{u.statement}</p>
                 <div className="mt-2 h-1 rounded-full bg-slate-800 overflow-hidden">
@@ -141,7 +141,7 @@ function Segment({
   bad?: boolean;
 }) {
   return (
-    <div className="rounded-xl bg-slate-950/40 border border-slate-800/70 p-3">
+    <div className="rounded-xl bg-ink/40 border border-line p-3">
       <div className="flex items-center justify-between">
         <span className="text-[12px] font-medium text-slate-200">{segment}</span>
         <span className={cn("text-[11px] tabular-nums font-semibold", bad ? "text-rose-300" : "text-emerald-300")}>
@@ -152,7 +152,7 @@ function Segment({
       {agentId && (
         <button
           onClick={() => onSelectAgent(agentId)}
-          className="mt-1.5 text-[11px] text-cyan-300 hover:text-cyan-200 flex items-center gap-1"
+          className="mt-1.5 text-[11px] text-signal-bright hover:text-signal flex items-center gap-1"
         >
           Meet a resident <ArrowRight className="w-3 h-3" />
         </button>

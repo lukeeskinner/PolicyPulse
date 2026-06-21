@@ -39,15 +39,15 @@ export function MetricsTimeline({ metrics, rounds, currentRound, status }: Props
                 <div
                   className={cn(
                     "w-3 h-3 rounded-full transition-colors",
-                    active ? "bg-cyan-400 glow-cyan pp-pulse" : done ? "bg-cyan-500/70" : "bg-slate-700",
+                    active ? "bg-signal glow-signal pp-pulse" : done ? "bg-signal/70" : "bg-slate-700",
                   )}
                 />
-                <span className={cn("mt-1.5 text-[10px] whitespace-nowrap", active ? "text-cyan-300" : "text-slate-500")}>
+                <span className={cn("mt-1.5 font-data text-[10px] whitespace-nowrap", active ? "text-signal-bright" : "text-slate-500")}>
                   {s.label}
                 </span>
               </div>
               {i < steps.length - 1 && (
-                <div className={cn("h-px flex-1 mx-1 mb-4", done ? "bg-cyan-500/50" : "bg-slate-700/60")} />
+                <div className={cn("h-px flex-1 mx-1 mb-4", done ? "bg-signal/50" : "bg-slate-700/60")} />
               )}
             </div>
           );
@@ -71,10 +71,10 @@ export function MetricsTimeline({ metrics, rounds, currentRound, status }: Props
               <XAxis dataKey="label" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis domain={[0, 100]} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ background: "#0b1120", border: "1px solid #1e293b", borderRadius: 12, fontSize: 12 }}
+                contentStyle={{ background: "#14171f", border: "1px solid #272c38", borderRadius: 12, fontSize: 12 }}
                 labelStyle={{ color: "#e2e8f0" }}
               />
-              <Line type="monotone" dataKey="wellbeing" name="Wellbeing" stroke="#22d3ee" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="wellbeing" name="Wellbeing" stroke="#6e8bff" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="burden" name="Rent burden %" stroke="#fb7185" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="displacement" name="Displaced %" stroke="#f59e0b" strokeWidth={2} dot={false} />
             </LineChart>
@@ -86,7 +86,7 @@ export function MetricsTimeline({ metrics, rounds, currentRound, status }: Props
         )}
       </div>
       <div className="flex items-center gap-4 mt-2 text-[11px] text-slate-400">
-        <Legend color="#22d3ee" label="Wellbeing (0–100)" />
+        <Legend color="#6e8bff" label="Wellbeing (0–100)" />
         <Legend color="#fb7185" label="Rent burden %" />
         <Legend color="#f59e0b" label="Displaced %" />
       </div>
@@ -112,10 +112,10 @@ function MetricCard({
   const good = invert ? falling : rising;
   const bad = invert ? rising : falling;
   return (
-    <div className="rounded-xl bg-slate-950/40 border border-slate-800/70 px-3 py-2.5">
+    <div className="rounded-xl bg-ink/40 border border-line px-3 py-2.5">
       <div className="text-[11px] text-slate-400">{label}</div>
       <div className="flex items-baseline gap-1.5 mt-0.5">
-        <span className="text-lg font-semibold text-slate-100">{value}{suffix}</span>
+        <span className="font-data text-lg font-semibold text-slate-100 tabular-nums">{value}{suffix}</span>
         {(rising || falling) && (
           <span className={cn("flex items-center text-[11px]", good ? "text-emerald-400" : bad ? "text-rose-400" : "text-slate-500")}>
             {rising ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}

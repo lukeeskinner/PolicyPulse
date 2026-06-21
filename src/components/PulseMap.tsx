@@ -10,10 +10,13 @@ import type { PolicyArc, PolicyMarker, PulseGeo, UserArea } from "@/lib/civic";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
+// Categorical data encoding for the map: federal hub vs. a state's delegation
+// in Congress vs. the state legislature. Three distinct cool hues that sit on
+// the Civic Instrument palette (federal = the brand signal blue).
 const KIND_COLOR: Record<PolicyMarker["kind"], string> = {
-  "federal-hub": "#a855f7",
+  "federal-hub": "#6e8bff",
   delegation: "#38bdf8",
-  "state-house": "#22d3ee",
+  "state-house": "#c084fc",
 };
 
 type OverlayProps = ConstructorParameters<typeof MapboxOverlay>[0];
@@ -54,8 +57,8 @@ export function PulseMap({ geo, area, selectedId, onSelect }: PulseMapProps) {
         data: geo.arcs,
         getSourcePosition: (d) => d.source,
         getTargetPosition: (d) => d.target,
-        getSourceColor: [56, 189, 248, 150],
-        getTargetColor: [168, 85, 247, 220],
+        getSourceColor: [192, 132, 252, 150],
+        getTargetColor: [110, 139, 255, 220],
         getWidth: (d) => 1.2 + Math.min(6, d.weight),
         getHeight: 0.55,
         widthUnits: "pixels",
@@ -84,8 +87,8 @@ export function PulseMap({ geo, area, selectedId, onSelect }: PulseMapProps) {
         {area && (
           <Marker longitude={area.lng} latitude={area.lat} anchor="center">
             <div className="relative flex items-center justify-center">
-              <span className="absolute w-10 h-10 rounded-full bg-cyan-400/20 animate-ping" />
-              <span className="relative w-2.5 h-2.5 rounded-full bg-cyan-300 ring-2 ring-cyan-100/70 shadow-[0_0_12px_rgba(34,211,238,0.9)]" />
+              <span className="absolute w-10 h-10 rounded-full bg-signal/20 animate-ping" />
+              <span className="relative w-2.5 h-2.5 rounded-full bg-signal ring-2 ring-[#c7d2ff]/70 shadow-[0_0_12px_rgba(110,139,255,0.9)]" />
             </div>
           </Marker>
         )}
@@ -148,11 +151,12 @@ function PolicyPin({ marker, active }: { marker: PolicyMarker; active: boolean }
 function MapLegend() {
   return (
     <div className="absolute bottom-3 left-3 glass rounded-xl px-3 py-2.5 text-[10px] text-slate-300 space-y-1.5 pointer-events-none">
+      <div className="eyebrow mb-1">Legislation</div>
       <LegendRow color={KIND_COLOR["federal-hub"]} label="U.S. Congress (federal)" />
       <LegendRow color={KIND_COLOR.delegation} label="State delegation in Congress" />
       <LegendRow color={KIND_COLOR["state-house"]} label="State legislature bills" />
-      <div className="flex items-center gap-1.5 pt-0.5 text-slate-500">
-        <span className="w-2 h-2 rounded-full bg-cyan-300" /> Your area
+      <div className="flex items-center gap-1.5 pt-1.5 mt-0.5 border-t border-line text-slate-500">
+        <span className="w-2 h-2 rounded-full bg-signal" /> Your area
       </div>
     </div>
   );
@@ -170,15 +174,15 @@ function LegendRow({ color, label }: { color: string; label: string }) {
 function MapMissingKey() {
   return (
     <div className="relative w-full h-full rounded-2xl grid-bg glass flex flex-col items-center justify-center text-center px-6">
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400/30 to-violet-500/30 flex items-center justify-center mb-4">
-        <Landmark className="w-6 h-6 text-cyan-200" />
+      <div className="w-12 h-12 rounded-2xl bg-signal/15 border border-signal/30 flex items-center justify-center mb-4">
+        <Landmark className="w-6 h-6 text-signal-bright" />
       </div>
       <h3 className="font-display text-lg text-slate-100">The map needs a Mapbox token</h3>
       <p className="text-sm text-slate-400 mt-2 max-w-sm leading-relaxed">
-        Add <code className="font-data text-cyan-300">NEXT_PUBLIC_MAPBOX_TOKEN</code> to your{" "}
-        <code className="font-data text-cyan-300">.env.local</code> to render the live 3D map of bills
+        Add <code className="font-data text-signal-bright">NEXT_PUBLIC_MAPBOX_TOKEN</code> to your{" "}
+        <code className="font-data text-signal-bright">.env.local</code> to render the live 3D map of bills
         moving around you. It&apos;s free at{" "}
-        <a href="https://account.mapbox.com/access-tokens/" className="text-cyan-300 underline" target="_blank" rel="noreferrer">
+        <a href="https://account.mapbox.com/access-tokens/" className="text-signal-bright underline" target="_blank" rel="noreferrer">
           mapbox.com
         </a>
         .

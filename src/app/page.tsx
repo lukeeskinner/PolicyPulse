@@ -4,7 +4,8 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, ArrowRight, Crosshair, Landmark, Loader2, Radar, Search } from "lucide-react";
+import { ArrowRight, Crosshair, Landmark, Loader2, Radar, Search } from "lucide-react";
+import { PulseMark, PulseLine } from "@/components/Brand";
 import { LocationBadge } from "@/components/LocationBadge";
 import { NewsRail } from "@/components/NewsRail";
 import { PolicyDetail } from "@/components/PolicyDetail";
@@ -42,15 +43,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b border-slate-800/70 backdrop-blur sticky top-0 z-30 bg-[#05070e]/80">
+      <header className="relative border-b border-line backdrop-blur sticky top-0 z-30 bg-ink/80">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-slate-900" />
-            </div>
+            <PulseMark className="w-9 h-9" live />
             <div>
-              <h1 className="font-display text-base font-bold tracking-tight text-slate-50 leading-none">PolicyPulse</h1>
-              <p className="text-[11px] text-slate-400 mt-0.5">The law, moving around you — in real time</p>
+              <h1 className="font-display text-base font-semibold tracking-tight text-slate-50 leading-none">
+                Policy<span className="text-signal-bright">Pulse</span>
+              </h1>
+              <p className="eyebrow mt-1.5">The law, moving around you</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -62,12 +63,13 @@ export default function Home() {
             />
             <Link
               href="/simulate"
-              className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-cyan-200 border border-slate-700/70 hover:border-cyan-500/50 rounded-full px-3 py-1.5 transition-colors"
+              className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"
             >
               Open simulator <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
+        <PulseLine width={2000} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />
       </header>
 
       <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 lg:px-6 py-4 flex flex-col gap-4">
@@ -109,7 +111,7 @@ function HeroLine({ area, totalBills, loading }: { area: UserArea | null; totalB
       <div>
         <h2 className="font-display text-xl sm:text-2xl text-slate-100 leading-tight">
           Every law lands on someone.{" "}
-          <span className="font-serif-editorial italic bg-gradient-to-r from-cyan-300 to-violet-300 bg-clip-text text-transparent">
+          <span className="font-serif-editorial italic text-signal-bright">
             See where it lands.
           </span>
         </h2>
@@ -123,7 +125,7 @@ function HeroLine({ area, totalBills, loading }: { area: UserArea | null; totalB
       </div>
       <Link
         href="/simulate"
-        className="shrink-0 inline-flex items-center gap-1.5 text-sm font-medium text-slate-950 bg-gradient-to-r from-cyan-300 to-violet-300 hover:from-cyan-200 hover:to-violet-200 rounded-xl px-4 py-2 transition-colors"
+        className="shrink-0 inline-flex items-center gap-1.5 text-sm font-medium text-ink bg-signal hover:bg-signal-bright rounded-xl px-4 py-2 transition-colors"
       >
         <Radar className="w-4 h-4" /> Simulate a policy
       </Link>
@@ -136,8 +138,8 @@ function LocatePrompt({ onUseLocation, onSearch }: { onUseLocation: () => void; 
   return (
     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
       <div className="glass rounded-2xl p-6 max-w-sm text-center pointer-events-auto">
-        <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 flex items-center justify-center mx-auto mb-3">
-          <Crosshair className="w-6 h-6 text-cyan-300" />
+        <div className="w-12 h-12 rounded-2xl bg-signal/15 flex items-center justify-center mx-auto mb-3">
+          <Crosshair className="w-6 h-6 text-signal-bright" />
         </div>
         <h3 className="font-display text-lg text-slate-100">Find the bills around you</h3>
         <p className="text-sm text-slate-400 mt-1.5">
@@ -145,11 +147,11 @@ function LocatePrompt({ onUseLocation, onSearch }: { onUseLocation: () => void; 
         </p>
         <button
           onClick={onUseLocation}
-          className="w-full flex items-center justify-center gap-1.5 text-sm font-medium text-slate-950 bg-cyan-300 hover:bg-cyan-200 rounded-lg px-3 py-2 mt-4 transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 text-sm font-medium text-ink bg-signal hover:bg-signal-bright rounded-lg px-3 py-2 mt-4 transition-colors"
         >
           <Crosshair className="w-4 h-4" /> Use my location
         </button>
-        <div className="flex items-center gap-1.5 mt-2 border border-slate-700/70 rounded-lg px-3 py-1.5">
+        <div className="flex items-center gap-1.5 mt-2 border border-line rounded-lg px-3 py-1.5 focus-within:border-signal/50 transition-colors">
           <Search className="w-4 h-4 text-slate-500" />
           <input
             value={q}
@@ -160,7 +162,7 @@ function LocatePrompt({ onUseLocation, onSearch }: { onUseLocation: () => void; 
           />
           <button
             onClick={() => onSearch(q)}
-            className="text-[11px] text-slate-950 bg-slate-300 hover:bg-white rounded px-2 py-1 font-medium transition-colors"
+            className="text-[11px] text-ink bg-signal hover:bg-signal-bright rounded px-2 py-1 font-medium transition-colors"
           >
             Go
           </button>
@@ -174,14 +176,14 @@ function MissionBand({ snapshot }: { snapshot: PulseSnapshot }) {
   return (
     <div className="glass rounded-2xl p-5 grid-bg flex flex-col lg:flex-row gap-5 lg:items-center justify-between">
       <div className="max-w-2xl">
-        <div className="flex items-center gap-2 mb-1.5">
-          <Landmark className="w-4 h-4 text-violet-300" />
-          <span className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">Why this matters</span>
+        <div className="flex items-center gap-2 mb-2">
+          <Landmark className="w-4 h-4 text-signal" />
+          <span className="eyebrow">Why this matters</span>
         </div>
         <p className="font-serif-editorial text-lg text-slate-200 leading-snug">
           PolicyPulse is a civic-participation tool: it surfaces the real legislation moving around you and lets anyone
           stress-test a bill on a digital twin of their own community — built from live Census data — to see who it helps
-          and who it hurts, <span className="italic text-cyan-200">before it ever becomes law.</span>
+          and who it hurts, <span className="italic text-signal-bright">before it ever becomes law.</span>
         </p>
       </div>
       <div className="flex flex-wrap gap-2 shrink-0">
@@ -208,10 +210,10 @@ function SourceChip({ label, state }: { label: string; state: SourceState | "idl
   };
   const s = map[state] ?? map.idle;
   return (
-    <div className="flex items-center gap-2 border border-slate-700/70 rounded-full px-3 py-1.5">
+    <div className="flex items-center gap-2 border border-line rounded-full px-3 py-1.5">
       <span className={`w-2 h-2 rounded-full ${s.dot}`} />
       <span className="text-[11px] text-slate-300 font-medium">{label}</span>
-      <span className="text-[10px] text-slate-500">{s.text}</span>
+      <span className="font-data text-[10px] text-slate-500">{s.text}</span>
     </div>
   );
 }
@@ -219,7 +221,7 @@ function SourceChip({ label, state }: { label: string; state: SourceState | "idl
 function MapLoading() {
   return (
     <div className="w-full h-full rounded-2xl glass grid-bg flex items-center justify-center">
-      <Loader2 className="w-6 h-6 text-cyan-300 animate-spin" />
+      <Loader2 className="w-6 h-6 text-signal-bright animate-spin" />
     </div>
   );
 }

@@ -27,12 +27,10 @@ export function NewsRail({ articles, loading, status, area }: NewsRailProps) {
 
   return (
     <div className="glass rounded-2xl h-full flex flex-col overflow-hidden">
-      <header className="px-4 py-3 border-b border-slate-800/70 flex items-center justify-between shrink-0">
+      <header className="px-4 py-3 border-b border-line flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
-          <Newspaper className="w-4 h-4 text-violet-300" />
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-200">
-            News around you
-          </h2>
+          <Newspaper className="w-4 h-4 text-signal" />
+          <h2 className="eyebrow">News around you</h2>
         </div>
         {hasNews && (
           <span className="flex items-center gap-1 text-[10px] text-emerald-300">
@@ -64,10 +62,10 @@ function NewsItem({ article }: { article: NewsArticle }) {
       href={article.url}
       target="_blank"
       rel="noreferrer"
-      className="block px-4 py-3 border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors group"
+      className="block px-4 py-3 border-b border-line/60 hover:bg-slate-800/30 transition-colors group"
     >
       <div className="flex items-center gap-2 text-[10px] text-slate-500 mb-1">
-        <span className="text-cyan-300/90 font-medium truncate max-w-[60%]">{article.source}</span>
+        <span className="font-data text-signal-bright/90 font-medium truncate max-w-[60%]">{article.source}</span>
         <span>·</span>
         <span>{timeAgo(article.publishedAt)}</span>
         <ExternalLink className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />

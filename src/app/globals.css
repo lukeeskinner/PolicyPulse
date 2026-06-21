@@ -5,12 +5,20 @@
   --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif, sans-serif;
   --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
   --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
-  --color-ink: #05070e;
-  --color-surface: #0b1120;
-  --color-surface-2: #111a2e;
-  --color-line: #1e293b;
-  --color-accent: #22d3ee;
-  --color-accent-2: #a855f7;
+
+  /* Civic Instrument palette — warm graphite ink + a single ink-blue "signal".
+     The vivid data colors (emerald / rose / amber + demographic group hues)
+     are deliberately left to Tailwind defaults so saturated color always
+     means something. The chrome stays near-monochrome on purpose. */
+  --color-ink: #0b0d12;
+  --color-surface: #14171f;
+  --color-surface-2: #191d27;
+  --color-line: #272c38;
+  --color-signal: #6e8bff;
+  --color-signal-bright: #9fb0ff;
+  --color-accent: #6e8bff;
+  --color-federal: #6e8bff;
+  --color-state: #c084fc;
 }
 
 :root {
@@ -19,42 +27,66 @@
 
 html,
 body {
-  background: #05070e;
-  color: #e2e8f0;
+  background: var(--color-ink);
+  color: #dfe3ec;
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
-
-.font-display { font-family: var(--font-grotesk), var(--font-inter), sans-serif; letter-spacing: -0.01em; }
-.font-serif-editorial { font-family: var(--font-instrument), ui-serif, Georgia, serif; }
-.font-data { font-family: var(--font-jetbrains), ui-monospace, monospace; font-feature-settings: "tnum" 1; }
 
 body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
-  background-image:
-    radial-gradient(60rem 60rem at 85% -10%, rgba(34, 211, 238, 0.08), transparent 60%),
-    radial-gradient(50rem 50rem at 0% 0%, rgba(168, 85, 247, 0.08), transparent 55%);
+  /* a single faint signal wash from the top-right — no twin AI gradient */
+  background-image: radial-gradient(72rem 52rem at 90% -14%, rgba(110, 139, 255, 0.07), transparent 62%);
   background-attachment: fixed;
 }
 
-/* Subtle blueprint grid used behind the simulation stage */
+::selection {
+  background: rgba(110, 139, 255, 0.28);
+  color: #f4f6ff;
+}
+
+/* --- Type roles -------------------------------------------------------- */
+.font-display { font-family: var(--font-grotesk), var(--font-inter), sans-serif; letter-spacing: -0.01em; }
+.font-serif-editorial { font-family: var(--font-instrument), ui-serif, Georgia, serif; }
+.font-data { font-family: var(--font-jetbrains), ui-monospace, monospace; font-feature-settings: "tnum" 1; }
+
+/* The instrument's labelling voice: a monospaced civic "record" eyebrow. */
+.eyebrow {
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6b7689;
+}
+
+/* --- Instrument panel surface (kept named .glass for drop-in reuse) ---- */
+.glass {
+  background: linear-gradient(180deg, rgba(25, 29, 39, 0.66), rgba(16, 19, 26, 0.72));
+  border: 1px solid var(--color-line);
+  backdrop-filter: blur(8px);
+}
+
+/* Hairline measurement grid behind simulation/idle stages. */
 .grid-bg {
   background-image:
-    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
+    linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px;
 }
 
-.glass {
-  background: linear-gradient(180deg, rgba(17, 26, 46, 0.85), rgba(11, 17, 32, 0.85));
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  backdrop-filter: blur(10px);
+.glow-signal {
+  box-shadow: 0 0 0 1px rgba(110, 139, 255, 0.4), 0 0 22px rgba(110, 139, 255, 0.22);
 }
 
-.glow-cyan {
-  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.35), 0 0 24px rgba(34, 211, 238, 0.18);
+/* Keyboard focus — visible, on-brand. */
+:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 2px;
+  border-radius: 5px;
 }
 
+/* --- Motion ------------------------------------------------------------ */
 @keyframes pp-pop {
   0% { transform: scale(0); opacity: 0; }
   70% { transform: scale(1.18); opacity: 1; }
@@ -64,23 +96,42 @@ body {
 
 @keyframes pp-pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+  50% { opacity: 0.4; }
 }
-.pp-pulse { animation: pp-pulse 1.4s ease-in-out infinite; }
+.pp-pulse { animation: pp-pulse 1.5s ease-in-out infinite; }
 
-/* Auto-scrolling news rail (pauses on hover) */
+/* The signature: a live pulse waveform that scrolls horizontally. */
+@keyframes pp-scroll-x {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.pp-scroll-x { animation: pp-scroll-x 16s linear infinite; }
+
+/* Auto-scrolling news rail (pauses on hover). */
 @keyframes pp-vscroll {
   from { transform: translateY(0); }
   to { transform: translateY(-50%); }
 }
 .pp-vscroll { animation: pp-vscroll linear infinite; }
 .pp-vscroll-host:hover .pp-vscroll { animation-play-state: paused; }
+
 .mask-fade-y {
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
   mask-image: linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
 }
+.mask-fade-x {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+}
 
 /* Thin custom scrollbars */
 *::-webkit-scrollbar { width: 8px; height: 8px; }
-*::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.22); border-radius: 9999px; }
+*::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.2); border-radius: 9999px; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(110, 139, 255, 0.4); }
 *::-webkit-scrollbar-track { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-pop, .pp-pulse, .pp-scroll-x, .pp-vscroll, .animate-ping, .animate-spin, .animate-pulse {
+    animation: none !important;
+  }
+}

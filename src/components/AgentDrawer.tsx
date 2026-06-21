@@ -48,7 +48,7 @@ export function AgentDrawer({ runId, agentId, onClose }: Props) {
             onClick={onClose}
           />
           <motion.aside
-            className="fixed right-0 top-0 bottom-0 w-full max-w-md z-50 glass border-l border-slate-700/60 overflow-y-auto"
+            className="fixed right-0 top-0 bottom-0 w-full max-w-md z-50 glass border-l border-line overflow-y-auto"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -97,12 +97,12 @@ export function AgentDrawer({ runId, agentId, onClose }: Props) {
                   </div>
 
                   {/* narrative */}
-                  <div className="mt-4 rounded-xl bg-slate-950/50 border border-slate-800/70 p-4">
+                  <div className="mt-4 rounded-xl bg-ink/50 border border-line p-4">
                     <div className="flex items-center gap-1.5 mb-2">
-                      <Quote className="w-3.5 h-3.5 text-cyan-300" />
-                      <span className="text-[11px] uppercase tracking-wide text-slate-400">Their story</span>
+                      <Quote className="w-3.5 h-3.5 text-signal" />
+                      <span className="eyebrow">Their story</span>
                       {data.source === "llm" && (
-                        <span className="ml-auto flex items-center gap-1 text-[10px] text-violet-300">
+                        <span className="ml-auto flex items-center gap-1 text-[10px] text-signal-bright">
                           <Sparkles className="w-3 h-3" /> Haiku
                         </span>
                       )}
@@ -112,7 +112,7 @@ export function AgentDrawer({ runId, agentId, onClose }: Props) {
 
                   {/* trajectory */}
                   <div className="mt-4">
-                    <h3 className="text-[11px] uppercase tracking-wide text-slate-400 mb-2">Trajectory</h3>
+                    <h3 className="eyebrow mb-2">Trajectory</h3>
                     <div className="space-y-1.5">
                       {data.history.map((h) => (
                         <div key={h.round} className="flex items-center gap-2 text-xs">
@@ -141,7 +141,7 @@ export function AgentDrawer({ runId, agentId, onClose }: Props) {
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-slate-950/40 border border-slate-800/60 px-2.5 py-1.5">
+    <div className="rounded-lg bg-ink/40 border border-line px-2.5 py-1.5">
       <div className="text-[10px] text-slate-500">{label}</div>
       <div className="text-[12px] text-slate-200 capitalize truncate">{value}</div>
     </div>

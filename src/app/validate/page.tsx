@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowLeft, ArrowUp, ExternalLink, FlaskConical, Minus, Play } from "lucide-react";
+import { PulseLine } from "@/components/Brand";
 import type { ActualMetric, HistoricalCase } from "@/lib/historical";
 import { cn } from "@/lib/utils";
 
@@ -36,16 +37,17 @@ export default function ValidatePage() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-slate-800/70 backdrop-blur sticky top-0 z-30 bg-[#05070e]/80">
+      <header className="relative border-b border-line backdrop-blur sticky top-0 z-30 bg-ink/80">
         <div className="max-w-5xl mx-auto px-4 lg:px-6 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-sm text-slate-300 hover:text-white">
+          <Link href="/" className="flex items-center gap-2 text-sm text-slate-300 hover:text-signal-bright transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to dashboard
           </Link>
           <div className="flex items-center gap-2 text-slate-200">
-            <FlaskConical className="w-4 h-4 text-cyan-300" />
-            <span className="text-sm font-semibold">Historical validation</span>
+            <FlaskConical className="w-4 h-4 text-signal" />
+            <span className="font-display text-sm font-semibold text-slate-100">Historical validation</span>
           </div>
         </div>
+        <PulseLine width={1400} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />
       </header>
 
       <main className="max-w-5xl mx-auto px-4 lg:px-6 py-6 pb-20">
@@ -59,18 +61,18 @@ export default function ValidatePage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base font-semibold text-slate-100">{c.title}</h2>
-                    <span className="text-[11px] text-slate-500">{c.jurisdiction} · {c.year}</span>
+                    <h2 className="font-display text-base font-semibold text-slate-100">{c.title}</h2>
+                    <span className="font-data text-[11px] text-slate-500">{c.jurisdiction} · {c.year}</span>
                   </div>
                   <p className="text-sm text-slate-400 mt-1.5 leading-relaxed max-w-3xl">{c.summary}</p>
-                  <a href={c.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] text-cyan-300 hover:text-cyan-200 mt-2">
+                  <a href={c.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] text-signal-bright hover:text-signal mt-2">
                     {c.source} <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
                 <button
                   onClick={() => run(c.id)}
                   disabled={loading[c.id]}
-                  className="shrink-0 flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium bg-gradient-to-r from-cyan-500 to-violet-500 text-white hover:shadow-[0_0_20px_rgba(34,211,238,0.3)] disabled:opacity-50"
+                  className="shrink-0 flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium bg-signal text-ink hover:bg-signal-bright hover:shadow-[0_0_20px_rgba(110,139,255,0.3)] disabled:opacity-50"
                 >
                   <Play className="w-3.5 h-3.5" />
                   {loading[c.id] ? "Running…" : results[c.id] ? "Re-run" : "Validate"}
@@ -78,7 +80,7 @@ export default function ValidatePage() {
               </div>
 
               <div className="mt-4 space-y-1.5">
-                <div className="grid grid-cols-12 gap-2 text-[10px] uppercase tracking-wide text-slate-500 px-1">
+                <div className="grid grid-cols-12 gap-2 font-data text-[10px] uppercase tracking-[0.12em] text-slate-500 px-1">
                   <span className="col-span-4">Metric</span>
                   <span className="col-span-4">Documented (actual)</span>
                   <span className="col-span-3">PolicyPulse predicted</span>
@@ -105,12 +107,12 @@ function Row({ actual, predicted }: { actual: ActualMetric; predicted?: Predicte
         ? { label: "Match", cls: "bg-emerald-500/15 text-emerald-300" }
         : { label: "Diverges", cls: "bg-rose-500/15 text-rose-300" };
   return (
-    <div className="grid grid-cols-12 gap-2 items-center rounded-lg bg-slate-950/40 border border-slate-800/60 px-3 py-2 text-xs">
+    <div className="grid grid-cols-12 gap-2 items-center rounded-lg bg-ink/40 border border-line px-3 py-2 text-xs">
       <span className="col-span-4 text-slate-200">{actual.label}</span>
-      <span className="col-span-4 text-slate-400 flex items-center gap-1.5">
+      <span className="col-span-4 font-data text-slate-400 flex items-center gap-1.5 tabular-nums">
         <Arrow dir={actual.direction} /> {actual.actual}
       </span>
-      <span className="col-span-3 text-slate-300 flex items-center gap-1.5">
+      <span className="col-span-3 font-data text-slate-300 flex items-center gap-1.5 tabular-nums">
         {predicted ? (<><Arrow dir={predicted.direction} /> {predicted.display}</>) : <span className="text-slate-600">—</span>}
       </span>
       <span className="col-span-1 flex justify-end">
