@@ -20,6 +20,10 @@ function radiusFor(n: WorldNode): number {
   return 3.1;
 }
 
+function shortLabel(label: string): string {
+  return label.length > 18 ? `${label.slice(0, 17)}…` : label;
+}
+
 export const WorldGraph = memo(function WorldGraph({ nodes }: Props) {
   const byId = useMemo(() => new Map(nodes.map((n) => [n.id, n] as const)), [nodes]);
 
@@ -81,11 +85,13 @@ export const WorldGraph = memo(function WorldGraph({ nodes }: Props) {
               strokeWidth={0.6}
               style={{ transition: "fill 0.6s ease" }}
             />
+            {/* keyed by status: remounts and flashes once whenever this node changes state */}
+            <circle key={`fl-${n.status}`} cx={n.x} cy={n.y} r={r} fill="none" stroke={color} strokeWidth={0.9} className="gp-flash" />
             {n.status === "restored" && (
               <circle cx={n.x} cy={n.y} r={r} fill="none" stroke={color} strokeWidth={0.5} opacity={0.6} className="pp-pulse" />
             )}
             <text x={n.x} y={n.y + r + 3.1} textAnchor="middle" fontSize={2.5} fill="#aeb6c6" className="font-data">
-              {n.label}
+              {shortLabel(n.label)}
             </text>
             {n.critical && (
               <text x={n.x} y={n.y + 0.9} textAnchor="middle" fontSize={3.4} fill="#0b0d12" fontWeight={700}>

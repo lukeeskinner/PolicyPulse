@@ -127,6 +127,18 @@ body {
 }
 .gp-ping { animation: gp-ping 1.4s ease-out infinite; transform-box: fill-box; transform-origin: center; }
 
+/* Situation-board scanner beam sweeping the topology (the signature ambiance). */
+@keyframes gp-scan { 0% { transform: translateX(-30%); opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { transform: translateX(560%); opacity: 0; } }
+.gp-scan { animation: gp-scan 7s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+
+/* Live-crisis ambiance: a slow breathing wash behind the cockpit. */
+@keyframes gp-breathe { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.9; } }
+.gp-breathe { animation: gp-breathe 4.5s ease-in-out infinite; }
+
+/* Status-change flash ring on a node (keyed remount triggers it once). */
+@keyframes gp-flash { 0% { opacity: 0.9; transform: scale(1); } 100% { opacity: 0; transform: scale(2.8); } }
+.gp-flash { animation: gp-flash 0.9s ease-out forwards; transform-box: fill-box; transform-origin: center; }
+
 .mask-fade-y {
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
   mask-image: linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
@@ -143,7 +155,7 @@ body {
 *::-webkit-scrollbar-track { background: transparent; }
 
 @media (prefers-reduced-motion: reduce) {
-  .pp-pop, .pp-pulse, .pp-scroll-x, .pp-vscroll, .gp-flow, .gp-ping, .animate-ping, .animate-spin, .animate-pulse {
+  .pp-pop, .pp-pulse, .pp-scroll-x, .pp-vscroll, .gp-flow, .gp-ping, .gp-scan, .gp-breathe, .gp-flash, .animate-ping, .animate-spin, .animate-pulse {
     animation: none !important;
   }
 }

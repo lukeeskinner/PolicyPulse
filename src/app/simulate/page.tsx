@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Check, Cpu, FlaskConical, FlaskRound, Ghost, Layers, Link2, Map as MapIcon, Users2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { Check, Cpu, FlaskConical, FlaskRound, Ghost, Layers, LineChart, Link2, Map as MapIcon, ScatterChart, Users2 } from "lucide-react";
 import { PulseMark, PulseLine } from "@/components/Brand";
 import { AgentDrawer } from "@/components/AgentDrawer";
 import { AgentGrid } from "@/components/AgentGrid";
@@ -15,6 +16,9 @@ import { PolicyConsole } from "@/components/PolicyConsole";
 import { groupColor, OUTCOME_COLORS, OUTCOME_LABEL, PHASE_LABEL } from "@/lib/ui";
 import { useSimulation } from "@/lib/useSimulation";
 import { cn } from "@/lib/utils";
+
+const container = { hidden: {}, show: { transition: { staggerChildren: 0.08, delayChildren: 0.03 } } };
+const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const } } };
 
 export default function SimulatePage() {
   return (
@@ -92,39 +96,45 @@ function SimulateDashboard() {
         <PulseLine width={2000} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />
       </header>
 
-      <main className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 pb-20">
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-12 lg:col-span-3 space-y-4">
-            <PolicyConsole
-              onRun={(req) => { setSelected(null); start(req); }}
-              onReset={() => { setSelected(null); reset(); }}
-              status={state.status}
-              initialPolicy={initialPolicy}
-              initialJurisdiction={initialJurisdiction}
-            />
-            {(state.policyModel || state.sources.length > 0) && (
-              <IngestionPanel policyModel={state.policyModel} profile={state.profile} sources={state.sources} breakdown={state.breakdown} />
-            )}
-          </div>
+      <main className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 pb-12">
+        <div className={cn(!active && "lg:min-h-[calc(100vh-108px)] lg:flex lg:flex-col lg:justify-center")}>
+          <motion.div variants={container} initial="hidden" animate="show" className={cn("grid grid-cols-12 gap-4", !active && "lg:items-stretch")}>
+            <motion.div variants={item} className="col-span-12 lg:col-span-3 space-y-4 flex flex-col">
+              <PolicyConsole
+                onRun={(req) => { setSelected(null); start(req); }}
+                onReset={() => { setSelected(null); reset(); }}
+                status={state.status}
+                initialPolicy={initialPolicy}
+                initialJurisdiction={initialJurisdiction}
+              />
+              {(state.policyModel || state.sources.length > 0) && (
+                <IngestionPanel policyModel={state.policyModel} profile={state.profile} sources={state.sources} breakdown={state.breakdown} />
+              )}
+            </motion.div>
 
-          <div className="col-span-12 lg:col-span-6 space-y-4">
-            <StageCard state={state} onSelect={setSelected} selected={selected ?? undefined} />
-            {active && (
-              <MetricsTimeline metrics={state.metrics} rounds={state.rounds} currentRound={state.currentRound} status={state.status} />
-            )}
-          </div>
+            <motion.div variants={item} className="col-span-12 lg:col-span-6 flex flex-col gap-4">
+              <StageCard state={state} onSelect={setSelected} selected={selected ?? undefined} />
+              {active && (
+                <MetricsTimeline metrics={state.metrics} rounds={state.rounds} currentRound={state.currentRound} status={state.status} />
+              )}
+            </motion.div>
 
-          <div className="col-span-12 lg:col-span-3">
-            <div className="lg:sticky lg:top-[72px] h-[520px] lg:h-[calc(100vh-92px)]">
-              <EventTicker items={state.ticker} />
-            </div>
-          </div>
+            <motion.div variants={item} className="col-span-12 lg:col-span-3">
+              {active ? (
+                <div className="lg:sticky lg:top-[72px] h-[520px] lg:h-[calc(100vh-92px)]">
+                  <EventTicker items={state.ticker} />
+                </div>
+              ) : (
+                <TwinPreview />
+              )}
+            </motion.div>
+          </motion.div>
         </div>
 
         {analysisReady && state.analysis && (
-          <div className="mt-4">
+          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="mt-4">
             <InequalitySpotlight analysis={state.analysis} byGroup={byGroup} onSelectAgent={setSelected} />
-          </div>
+          </motion.div>
         )}
       </main>
 
@@ -215,7 +225,7 @@ function StageCard({
         </div>
       </div>
 
-      <AgentGrid agents={state.agents} total={state.total} onSelect={onSelect} selectedId={selected} />
+      <AgentGrid agents={state.agents} total={state.total} onSelect={onSelect} selectedId={selected} groups={state.profile?.groups} />
 
       {state.status === "complete" && (
         <div className="flex items-center gap-3 mt-4 pt-3 border-t border-line flex-wrap">
@@ -237,7 +247,7 @@ function StageCard({
 
 function IdleHero() {
   return (
-    <div className="glass rounded-2xl p-8 grid-bg min-h-[360px] flex flex-col justify-center">
+    <div className="glass rounded-2xl p-8 grid-bg min-h-[360px] lg:h-full flex flex-col justify-center">
       <span className="eyebrow mb-3">The digital twin</span>
       <h2 className="font-display text-2xl font-semibold text-slate-100 leading-tight max-w-lg">
         Every policy creates winners and losers.{" "}
@@ -263,5 +273,33 @@ function Step({ n, text }: { n: number; text: string }) {
       <span className="w-5 h-5 rounded-full bg-signal/15 text-signal-bright font-data text-[11px] flex items-center justify-center shrink-0 mt-0.5">{n}</span>
       <span>{text}</span>
     </li>
+  );
+}
+
+// Idle-state companion to the hero: previews the three surfaces a run reveals,
+// so the right rail reads as intent rather than an empty live-feed.
+function TwinPreview() {
+  return (
+    <div className="glass rounded-2xl p-5 grid-bg lg:h-full flex flex-col">
+      <span className="eyebrow">What the twin reveals</span>
+      <div className="mt-4 space-y-4 flex-1">
+        <PreviewRow icon={<Users2 className="w-4 h-4" />} title="A living population" body="A statistically representative community, color-coded by group — each resident with their own story." />
+        <PreviewRow icon={<LineChart className="w-4 h-4" />} title="Three-year trajectory" body="Rent burden, displacement, and wellbeing move Month 1 → Year 3 as second-order effects cascade." />
+        <PreviewRow icon={<ScatterChart className="w-4 h-4" />} title="The inequality spotlight" body="Who gains, who's displaced, and the unintended consequences — broken out by group." />
+      </div>
+      <p className="text-[11px] text-slate-600 mt-4 pt-4 border-t border-line leading-relaxed">Grounded in live U.S. Census ACS data · modeled by Mastra agents.</p>
+    </div>
+  );
+}
+
+function PreviewRow({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="w-8 h-8 rounded-lg bg-signal/12 text-signal-bright flex items-center justify-center shrink-0">{icon}</span>
+      <div>
+        <h3 className="text-sm font-medium text-slate-100">{title}</h3>
+        <p className="text-[12px] text-slate-400 mt-0.5 leading-relaxed">{body}</p>
+      </div>
+    </div>
   );
 }

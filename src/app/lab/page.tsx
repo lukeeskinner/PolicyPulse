@@ -1,10 +1,10 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Dices, FlaskRound, GitCompareArrows, Layers, Loader2, Map as MapIcon, Play, SlidersHorizontal } from "lucide-react";
-import { PulseLine } from "@/components/Brand";
+import { motion } from "framer-motion";
+import { Dices, FlaskConical, FlaskRound, Ghost, GitCompareArrows, Loader2, Map as MapIcon, Play, SlidersHorizontal } from "lucide-react";
+import { AppHeader, NavPill } from "@/components/AppHeader";
 import { CompareView } from "@/components/lab/CompareView";
 import { MonteCarloView } from "@/components/lab/MonteCarloView";
 import { SensitivityView } from "@/components/lab/SensitivityView";
@@ -113,24 +113,14 @@ function Lab() {
 
   return (
     <div className="min-h-screen">
-      <header className="relative border-b border-line backdrop-blur sticky top-0 z-30 bg-ink/80">
-        <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-3 flex items-center justify-between">
-          <Link href="/simulate" className="flex items-center gap-2 text-sm text-slate-300 hover:text-signal-bright transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Simulator
-          </Link>
-          <div className="flex items-center gap-2 text-slate-200">
-            <Layers className="w-4 h-4 text-signal" />
-            <span className="font-display text-sm font-semibold text-slate-100">Policy Lab</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <NavPill href="/" icon={<MapIcon className="w-3.5 h-3.5" />} label="Map" />
-            <NavPill href="/runs" icon={<FlaskRound className="w-3.5 h-3.5" />} label="Runs" />
-          </div>
-        </div>
-        <PulseLine width={2000} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />
-      </header>
+      <AppHeader section="Lab" subtitle="Stress-test assumptions across many runs">
+        <NavPill href="/" icon={<MapIcon className="w-3.5 h-3.5" />} label="Pulse Map" />
+        <NavPill href="/ghost" icon={<Ghost className="w-3.5 h-3.5" />} label="Ghost" />
+        <NavPill href="/runs" icon={<FlaskRound className="w-3.5 h-3.5" />} label="Runs" />
+        <NavPill href="/validate" icon={<FlaskConical className="w-3.5 h-3.5" />} label="Validation" />
+      </AppHeader>
 
-      <main className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 pb-20">
+      <main className="max-w-[1500px] mx-auto px-4 lg:px-6 py-4 pb-10">
         {/* tab bar */}
         <div className="flex flex-wrap gap-2 mb-4">
           {TABS.map((t) => (
@@ -138,10 +128,10 @@ function Lab() {
               key={t.id}
               onClick={() => setTab(t.id)}
               className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium border transition-colors",
+                "flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium border transition-all duration-200",
                 tab === t.id
-                  ? "border-signal/50 bg-signal/10 text-signal-bright"
-                  : "border-line text-slate-300 hover:text-white hover:border-slate-500",
+                  ? "border-signal/50 bg-signal/10 text-signal-bright shadow-[0_0_20px_rgba(110,139,255,0.15)]"
+                  : "border-line text-slate-300 hover:text-white hover:border-slate-500 hover:-translate-y-0.5",
               )}
             >
               {t.icon}
@@ -151,9 +141,9 @@ function Lab() {
           ))}
         </div>
 
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid grid-cols-12 gap-4 lg:min-h-[calc(100vh-188px)] items-start">
           {/* controls */}
-          <div className="col-span-12 lg:col-span-3 space-y-4">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }} className="col-span-12 lg:col-span-3 space-y-4">
             <div className="glass rounded-2xl p-5 space-y-4">
               <Field label={tab === "compare" ? "Policy A — paste a bill or describe it" : "Paste a bill or describe a policy"}>
                 <textarea
@@ -255,10 +245,10 @@ function Lab() {
                 Ingestion &amp; policy analysis run once; the engine then re-runs many times. Larger draw counts are more stable but slower.
               </p>
             </div>
-          </div>
+          </motion.div>
 
           {/* results */}
-          <div className="col-span-12 lg:col-span-9">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.06, ease: [0.22, 1, 0.36, 1] }} className="col-span-12 lg:col-span-9 lg:h-full">
             {loading ? (
               <LoadingState tab={tab} />
             ) : result ? (
@@ -269,7 +259,7 @@ function Lab() {
             ) : (
               <EmptyState tab={tab} />
             )}
-          </div>
+          </motion.div>
         </div>
       </main>
     </div>
@@ -293,18 +283,10 @@ function Field({ label, children }: { label: React.ReactNode; children: React.Re
   );
 }
 
-function NavPill({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
-  return (
-    <Link href={href} className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors">
-      {icon} {label}
-    </Link>
-  );
-}
-
 function LoadingState({ tab }: { tab: Tab }) {
   const msg = tab === "montecarlo" ? "Rolling the dice across many populations…" : tab === "compare" ? "Running both policies on matched populations…" : "Sweeping the assumptions…";
   return (
-    <div className="glass rounded-2xl p-10 grid-bg min-h-[420px] flex flex-col items-center justify-center text-center">
+    <div className="glass rounded-2xl p-10 grid-bg min-h-[420px] lg:h-full flex flex-col items-center justify-center text-center">
       <Loader2 className="w-7 h-7 text-signal animate-spin mb-3" />
       <p className="text-slate-200 font-medium">{msg}</p>
       <p className="text-sm text-slate-500 mt-1">Ingesting the community and analyzing the policy, then re-running the engine.</p>
@@ -315,7 +297,7 @@ function LoadingState({ tab }: { tab: Tab }) {
 function EmptyState({ tab }: { tab: Tab }) {
   const t = TABS.find((x) => x.id === tab)!;
   return (
-    <div className="glass rounded-2xl p-10 grid-bg min-h-[420px] flex flex-col justify-center">
+    <div className="glass rounded-2xl p-10 grid-bg min-h-[420px] lg:h-full flex flex-col justify-center">
       <span className="eyebrow mb-3">{t.label}</span>
       <h2 className="font-display text-2xl font-semibold text-slate-100 leading-tight max-w-lg">
         {tab === "montecarlo" && <>One run is an anecdote. <span className="font-serif-editorial italic text-signal-bright">Many runs are evidence.</span></>}

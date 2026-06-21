@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Database, FlaskRound, Layers, Map as MapIcon } from "lucide-react";
-import { PulseLine } from "@/components/Brand";
+import { motion } from "framer-motion";
+import { ArrowRight, Database, FlaskConical, Ghost, Layers, Map as MapIcon, Plus } from "lucide-react";
+import { AppHeader, NavPill } from "@/components/AppHeader";
 import type { RunMeta } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,9 @@ const STATUS_STYLE: Record<string, string> = {
   error: "bg-rose-500/15 text-rose-300",
 };
 
+const container = { hidden: {}, show: { transition: { staggerChildren: 0.05 } } };
+const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as const } } };
+
 export default function RunsPage() {
   const [runs, setRuns] = useState<RunMeta[] | null>(null);
   const [redis, setRedis] = useState<RedisHealth | null>(null);
@@ -46,87 +50,62 @@ export default function RunsPage() {
 
   return (
     <div className="min-h-screen">
-      <header className="relative border-b border-line backdrop-blur sticky top-0 z-30 bg-ink/80">
-        <div className="max-w-5xl mx-auto px-4 lg:px-6 py-3 flex items-center justify-between">
-          <Link href="/simulate" className="flex items-center gap-2 text-sm text-slate-300 hover:text-signal-bright transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back to simulator
-          </Link>
-          <div className="flex items-center gap-2 text-slate-200">
-            <FlaskRound className="w-4 h-4 text-signal" />
-            <span className="font-display text-sm font-semibold text-slate-100">Run gallery</span>
-          </div>
-        </div>
-        <PulseLine width={1400} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />
-      </header>
+      <AppHeader section="Runs" subtitle="Replay & share saved simulations">
+        <NavPill href="/" icon={<MapIcon className="w-3.5 h-3.5" />} label="Pulse Map" />
+        <NavPill href="/ghost" icon={<Ghost className="w-3.5 h-3.5" />} label="Ghost" />
+        <NavPill href="/lab" icon={<Layers className="w-3.5 h-3.5" />} label="Lab" />
+        <NavPill href="/validate" icon={<FlaskConical className="w-3.5 h-3.5" />} label="Validation" />
+      </AppHeader>
 
-      <main className="max-w-5xl mx-auto px-4 lg:px-6 py-6 pb-20">
-        <div className="flex items-end justify-between gap-4 mb-6">
-          <p className="text-sm text-slate-400 max-w-2xl">
-            Every simulation you run is saved here. Open one to replay its outcome, or copy its
-            link to share a specific result. The dashboard reconstructs the full run from its snapshot.
-          </p>
-          <div className="flex items-center gap-2 shrink-0">
-            <Link href="/" className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors">
-              <MapIcon className="w-3.5 h-3.5" /> Map
-            </Link>
-            <Link href="/lab" className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors">
-              <Layers className="w-3.5 h-3.5" /> Lab
-            </Link>
+      <main className="max-w-[1200px] mx-auto px-4 lg:px-6 py-6 pb-12 flex flex-col min-h-[calc(100vh-92px)]">
+        <div className="flex items-end justify-between gap-4 mb-5 shrink-0">
+          <div>
+            <h2 className="font-display text-xl text-slate-100">Run gallery</h2>
+            <p className="text-sm text-slate-400 max-w-2xl mt-1">
+              Every simulation is saved here. Open one to replay its outcome, or copy its link to share a specific result.
+            </p>
           </div>
+          {redis && (
+            <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-500 shrink-0">
+              <Database className="w-3.5 h-3.5" />
+              {redis.connected ? "Mirrored to Redis" : "In-memory · last 40 runs"}
+            </div>
+          )}
         </div>
 
-        {redis && (
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mb-4">
-            <Database className="w-3.5 h-3.5" />
-            {redis.connected
-              ? "Runs mirrored to Redis — shareable links survive restarts."
-              : "In-memory store — the last 40 runs of this session are available."}
-          </div>
-        )}
-
-        {runs === null ? (
-          <div className="text-slate-600 text-sm py-16 text-center">Loading runs…</div>
-        ) : runs.length === 0 ? (
-          <div className="glass rounded-2xl p-10 text-center grid-bg">
-            <p className="text-slate-300 font-medium">No runs yet.</p>
-            <p className="text-sm text-slate-500 mt-1.5">Run a simulation and it will appear here.</p>
-            <Link
-              href="/simulate"
-              className="inline-flex items-center gap-2 mt-5 rounded-xl px-4 py-2.5 text-sm font-semibold bg-signal text-ink hover:bg-signal-bright transition-colors"
-            >
-              New simulation <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        ) : (
-          <div className="grid sm:grid-cols-2 gap-3">
-            {runs.map((r) => (
-              <Link
-                key={r.runId}
-                href={`/simulate?runId=${r.runId}`}
-                className="group glass rounded-2xl p-4 hover:border-signal/50 transition-colors flex flex-col"
-              >
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="font-data text-[11px] text-slate-400">{r.jurisdiction}</span>
-                  <span className={cn("text-[10px] px-1.5 py-0.5 rounded", STATUS_STYLE[r.status] ?? "bg-slate-800 text-slate-400")}>
-                    {r.status}
+        <div className="flex-1 flex flex-col justify-center">
+          {runs === null ? (
+            <div className="text-slate-600 text-sm py-16 text-center">Loading runs…</div>
+          ) : (
+            <motion.div variants={container} initial="hidden" animate="show" className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {runs.map((r) => (
+                <motion.div key={r.runId} variants={item}>
+                  <Link href={`/simulate?runId=${r.runId}`} className="group glass rounded-2xl p-4 hover:border-signal/50 hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full min-h-[150px]">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="font-data text-[11px] text-slate-400">{r.jurisdiction}</span>
+                      <span className={cn("text-[10px] px-1.5 py-0.5 rounded", STATUS_STYLE[r.status] ?? "bg-slate-800 text-slate-400")}>{r.status}</span>
+                    </div>
+                    <p className="text-sm font-medium text-slate-100 leading-snug line-clamp-2">{r.headline ?? r.policy}</p>
+                    <p className="text-[12px] text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">{r.policy}</p>
+                    <div className="flex items-center justify-between mt-auto pt-3 text-[11px] text-slate-500">
+                      <span>{r.agentCount > 0 ? `${r.agentCount} residents` : "snapshot"} · {relativeTime(r.createdAt)}</span>
+                      <span className="flex items-center gap-1 text-signal-bright opacity-0 group-hover:opacity-100 transition-opacity">Open <ArrowRight className="w-3 h-3" /></span>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+              <motion.div variants={item}>
+                <Link href="/simulate" className="group glass rounded-2xl p-4 border-dashed hover:border-signal/50 hover:-translate-y-0.5 transition-all duration-200 flex flex-col items-center justify-center text-center h-full min-h-[150px]">
+                  <span className="w-9 h-9 rounded-xl bg-signal/12 text-signal-bright flex items-center justify-center group-hover:bg-signal/20 transition-colors">
+                    <Plus className="w-4 h-4" />
                   </span>
-                </div>
-                {r.headline ? (
-                  <p className="text-sm font-medium text-slate-100 leading-snug line-clamp-2">{r.headline}</p>
-                ) : (
-                  <p className="text-sm font-medium text-slate-200 leading-snug line-clamp-2">{r.policy}</p>
-                )}
-                <p className="text-[12px] text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">{r.policy}</p>
-                <div className="flex items-center justify-between mt-auto pt-3 text-[11px] text-slate-500">
-                  <span>{r.agentCount > 0 ? `${r.agentCount} residents` : "snapshot"} · {relativeTime(r.createdAt)}</span>
-                  <span className="flex items-center gap-1 text-signal-bright opacity-0 group-hover:opacity-100 transition-opacity">
-                    Open <ArrowRight className="w-3 h-3" />
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+                  <p className="text-sm font-medium text-slate-200 mt-3">New simulation</p>
+                  <p className="text-[11px] text-slate-500 mt-1">Stress-test a bill on a digital twin</p>
+                </Link>
+              </motion.div>
+            </motion.div>
+          )}
+        </div>
       </main>
     </div>
   );

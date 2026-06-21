@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Ban, Check, CheckCheck, MessagesSquare, Radio, Repeat2 } from "lucide-react";
 import type { NegIntent, NegMessage } from "@/lib/ghost/types";
 import { cn } from "@/lib/utils";
@@ -39,14 +40,20 @@ export function NegotiationBus({ messages, agents }: Props) {
         {messages.length === 0 && (
           <p className="text-sm text-slate-600">When agents disagree, their structured negotiation messages — proposals, vetoes, counters, and consensus — stream here.</p>
         )}
+        <AnimatePresence initial={false}>
         {messages.map((m) => {
           const meta = INTENT[m.intent];
           const Icon = meta.Icon;
           const from = byId.get(m.from);
           return (
-            <div
+            <motion.div
               key={m.id}
-              className={cn("rounded-lg border p-2.5 animate-[pp-pop_0.2s_ease]", m.intent === "veto" ? "border-rose-500/40 bg-rose-500/5" : "border-line bg-ink/40")}
+              layout
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className={cn("rounded-lg border p-2.5", m.intent === "veto" ? "border-rose-500/50 bg-rose-500/[0.07] shadow-[0_0_18px_rgba(251,113,133,0.12)]" : "border-line bg-ink/40")}
             >
               <div className="flex items-center gap-1.5 text-[11px]">
                 <span className="font-data px-1.5 py-0.5 rounded shrink-0 flex items-center gap-1" style={{ background: `${meta.color}1f`, color: meta.color }}>
@@ -66,9 +73,10 @@ export function NegotiationBus({ messages, agents }: Props) {
                   <span className="w-1 h-1 rounded-full bg-amber-300" /> cites {m.cite}
                 </p>
               )}
-            </div>
+            </motion.div>
           );
         })}
+        </AnimatePresence>
       </div>
     </div>
   );

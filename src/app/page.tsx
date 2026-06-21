@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { ArrowRight, Crosshair, FlaskRound, Ghost, Landmark, Layers, Loader2, Radar, Search } from "lucide-react";
 import { PulseMark, PulseLine } from "@/components/Brand";
 import { LocationBadge } from "@/components/LocationBadge";
@@ -13,6 +14,12 @@ import type { Bill, SourceState, UserArea } from "@/lib/civic";
 import { usePulse, type PulseSnapshot } from "@/lib/usePulse";
 
 const HAS_MAP = !!process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
+const reveal = (delay = 0) => ({
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] as const },
+});
 
 const PulseMap = dynamic(() => import("@/components/PulseMap").then((m) => m.PulseMap), {
   ssr: false,
@@ -91,9 +98,11 @@ export default function Home() {
       </header>
 
       <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 lg:px-6 py-4 flex flex-col gap-4">
-        <HeroLine area={snapshot.area} totalBills={totalBills} loading={snapshot.loadingPolicies} />
+        <motion.div {...reveal(0)}>
+          <HeroLine area={snapshot.area} totalBills={totalBills} loading={snapshot.loadingPolicies} />
+        </motion.div>
 
-        <div className="grid grid-cols-12 gap-4">
+        <motion.div {...reveal(0.08)} className="grid grid-cols-12 gap-4">
           <div className="col-span-12 lg:col-span-8 relative rounded-2xl min-h-[480px] h-[calc(100vh-300px)]">
             <PulseMap
               geo={snapshot.geo}
@@ -115,9 +124,11 @@ export default function Home() {
               area={snapshot.area}
             />
           </div>
-        </div>
+        </motion.div>
 
-        <MissionBand snapshot={snapshot} />
+        <motion.div {...reveal(0.16)}>
+          <MissionBand snapshot={snapshot} />
+        </motion.div>
       </main>
     </div>
   );

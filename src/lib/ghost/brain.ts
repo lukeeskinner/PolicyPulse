@@ -335,6 +335,8 @@ function normalizeWorld(raw: z.infer<typeof rawWorldSchema>): GeneratedWorld {
     if (n.load === 0) n.load = Math.round(n.capacity * 0.5);
   }
 
+  spreadLayout(nodes);
+
   return {
     title: raw.title,
     domain,
@@ -344,6 +346,50 @@ function normalizeWorld(raw: z.infer<typeof rawWorldSchema>): GeneratedWorld {
     nodes,
     agentRoles: mapRoles(raw.agentRoles, domain),
   };
+}
+
+// Claude's raw x/y often clusters; relax overlapping nodes apart and fit the
+// bounding box to the board so the situation graph is legible and fills space.
+function spreadLayout(nodes: WorldNode[]): void {
+  if (nodes.length < 2) return;
+  const MIN = nodes.length > 8 ? 17 : 23;
+  for (let iter = 0; iter < 80; iter++) {
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i];
+        const b = nodes[j];
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let d = Math.hypot(dx, dy);
+        if (d < 0.01) {
+          dx = i % 2 ? 0.6 : -0.6;
+          dy = j % 2 ? 0.6 : -0.6;
+          d = Math.hypot(dx, dy);
+        }
+        if (d < MIN) {
+          const push = (MIN - d) / 2;
+          dx /= d;
+          dy /= d;
+          a.x -= dx * push;
+          a.y -= dy * push;
+          b.x += dx * push;
+          b.y += dy * push;
+        }
+      }
+    }
+  }
+  const xs = nodes.map((n) => n.x);
+  const ys = nodes.map((n) => n.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const spanX = maxX - minX || 1;
+  const spanY = maxY - minY || 1;
+  for (const n of nodes) {
+    n.x = Math.round(10 + ((n.x - minX) / spanX) * 80);
+    n.y = Math.round(12 + ((n.y - minY) / spanY) * 76);
+  }
 }
 
 function validateWorld(w: GeneratedWorld): boolean {
