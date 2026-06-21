@@ -1,9 +1,9 @@
 import type { AgentRole, GhostAgent } from "./types";
 
 // ============================================================================
-// Specialist agent roster. Each role carries a Fetch.ai-style identity, a
-// color used across the dashboard, and a one-line mandate. The orchestrator
-// deploys the subset of roles a scenario calls for.
+// Specialist agent roster. Each role carries a color used across the dashboard
+// and a one-line mandate that becomes the agent's Claude system prompt. The
+// orchestrator deploys whichever roles the generated world calls for.
 // ============================================================================
 
 interface RoleDef {
@@ -46,29 +46,26 @@ const ROLE_DEFS: Record<AgentRole, RoleDef> = {
   },
 };
 
-// Deterministic, plausible Fetch.ai bech32-style address per role.
-function fetchAddress(role: AgentRole): string {
-  const base = "qqxr7m3v9k2j4n8p6t5w0z1ad7yfh3lsc4ue2bg9";
-  let h = 0;
-  for (let i = 0; i < role.length; i++) h = (h * 31 + role.charCodeAt(i)) >>> 0;
-  const tail = (h.toString(36) + base).slice(0, 38);
-  return `fetch1${tail}`;
-}
-
 export function makeAgent(role: AgentRole): GhostAgent {
   const def = ROLE_DEFS[role];
-  return {
-    id: def.id,
-    role: def.role,
-    name: def.role,
-    fetchAddress: fetchAddress(role),
-    color: def.color,
-    blurb: def.blurb,
-  };
+  return { id: def.id, role: def.role, name: def.role, color: def.color, blurb: def.blurb };
 }
 
 export function makeAgents(roles: AgentRole[]): GhostAgent[] {
-  return roles.map(makeAgent);
+  // de-dupe while preserving order
+  const seen = new Set<AgentRole>();
+  return roles.filter((r) => (seen.has(r) ? false : (seen.add(r), true))).map(makeAgent);
+}
+
+// Which deployed agent fills the "guardian" duty (protects critical infra and
+// holds veto authority). Priority resolves to a single distinct agent.
+export function guardianOf(agents: GhostAgent[]): GhostAgent | undefined {
+  const pref: AgentRole[] = ["CommsAgent", "MedAgent", "SecurityAgent", "GridAgent", "TrafficAgent"];
+  for (const role of pref) {
+    const a = agents.find((x) => x.role === role);
+    if (a) return a;
+  }
+  return agents[0];
 }
 
 export function agentColor(role: AgentRole): string {

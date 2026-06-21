@@ -44,7 +44,7 @@ function AgentCard({ agent }: { agent: AgentRuntime }) {
               {PHASE_LABEL[agent.phase]}
             </span>
           </div>
-          <div className="font-data text-[9px] text-slate-600 truncate">{agent.fetchAddress}</div>
+          <div className="font-data text-[9px] text-slate-600 truncate">Fetch.ai uAgent · {agent.role}</div>
         </div>
       </div>
 

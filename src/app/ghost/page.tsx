@@ -58,7 +58,7 @@ export default function GhostPage() {
           {/* left rail */}
           <div className="col-span-12 lg:col-span-3 space-y-4">
             <ScenarioConsole
-              onDeploy={(prompt, scenarioId) => start({ prompt, scenarioId, voice })}
+              onDeploy={(prompt) => start({ prompt, voice })}
               onReset={reset}
               running={running}
               voice={voice}
