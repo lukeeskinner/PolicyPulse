@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Copy, ExternalLink, Loader2, Mail, Send } from "lucide-react";
 import type { Representative } from "@/lib/sources/representatives";
 import type { Analysis } from "@/lib/types";
@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   stateCode?: string;
+  lat?: number;
+  lng?: number;
   jurisdiction: string;
   billIdentifier: string;
   billTitle: string;
@@ -20,8 +22,22 @@ interface Draft {
   source: "llm" | "template";
 }
 
-export function ContactRep({ stateCode, jurisdiction, billIdentifier, billTitle, analysis }: Props) {
+interface RepSources {
+  federal?: string;
+  state?: string;
+}
+
+export function ContactRep({
+  stateCode,
+  lat,
+  lng,
+  jurisdiction,
+  billIdentifier,
+  billTitle,
+  analysis,
+}: Props) {
   const [reps, setReps] = useState<Representative[]>([]);
+  const [sources, setSources] = useState<RepSources>({});
   const [repsState, setRepsState] = useState<"loading" | "ready" | "empty" | "missing_key">("loading");
   const [selectedId, setSelectedId] = useState<string>("");
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -35,23 +51,40 @@ export function ContactRep({ stateCode, jurisdiction, billIdentifier, billTitle,
     }
     let cancelled = false;
     setRepsState("loading");
-    fetch(`/api/representatives?state=${stateCode}`)
+    const qs = new URLSearchParams({ state: stateCode });
+    if (lat != null && lng != null) {
+      qs.set("lat", String(lat));
+      qs.set("lng", String(lng));
+    }
+    fetch(`/api/representatives?${qs.toString()}`)
       .then((r) => r.json())
-      .then((data: { reps?: Representative[]; sources?: { federal?: string } }) => {
+      .then((data: { reps?: Representative[]; sources?: RepSources }) => {
         if (cancelled) return;
         const list = data.reps ?? [];
         setReps(list);
+        setSources(data.sources ?? {});
         setSelectedId(list[0]?.id ?? "");
         if (list.length > 0) setRepsState("ready");
-        else setRepsState(data.sources?.federal === "missing_key" ? "missing_key" : "empty");
+        else
+          setRepsState(
+            data.sources?.federal === "missing_key" && data.sources?.state === "missing_key"
+              ? "missing_key"
+              : "empty",
+          );
       })
       .catch(() => !cancelled && setRepsState("empty"));
     return () => {
       cancelled = true;
     };
-  }, [stateCode]);
+  }, [stateCode, lat, lng]);
 
   const selected = reps.find((r) => r.id === selectedId);
+
+  const groups = useMemo(() => {
+    const federal = reps.filter((r) => r.level === "federal");
+    const state = reps.filter((r) => r.level === "state");
+    return { federal, state };
+  }, [reps]);
 
   const generate = useCallback(async () => {
     if (!selected) return;
@@ -80,9 +113,14 @@ export function ContactRep({ stateCode, jurisdiction, billIdentifier, billTitle,
     }
   }, [selected, billIdentifier, billTitle, jurisdiction, analysis]);
 
-  const mailto = selected && draft
-    ? `mailto:${selected.email ?? ""}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`
-    : undefined;
+  // Prefilled mailto: with all components encodeURIComponent-encoded; newlines
+  // in the body are preserved by the encoder, so the mail app opens ready to send.
+  const mailto =
+    selected?.mailable && selected.email && draft
+      ? `mailto:${encodeURIComponent(selected.email)}` +
+        `?subject=${encodeURIComponent(draft.subject)}` +
+        `&body=${encodeURIComponent(draft.body)}`
+      : undefined;
 
   const copy = useCallback(async () => {
     if (!draft) return;
@@ -115,8 +153,9 @@ export function ContactRep({ stateCode, jurisdiction, billIdentifier, billTitle,
 
       {repsState === "missing_key" && (
         <p className="mt-4 text-xs text-slate-500">
-          Connect a <span className="font-data text-slate-400">CONGRESS_API_KEY</span> to look up your federal
-          delegation.
+          Connect a <span className="font-data text-slate-400">CONGRESS_API_KEY</span> (federal) or{" "}
+          <span className="font-data text-slate-400">OPENSTATES_API_KEY</span> (state) to look up your
+          representatives.
         </p>
       )}
 
@@ -136,15 +175,22 @@ export function ContactRep({ stateCode, jurisdiction, billIdentifier, billTitle,
                 setSelectedId(e.target.value);
                 setDraft(null);
               }}
-              className="flex-1 min-w-[200px] bg-surface/60 border border-line rounded-lg px-3 py-1.5 text-[13px] text-slate-100 focus:outline-none focus:border-signal/50"
+              className="flex-1 min-w-[220px] bg-surface/60 border border-line rounded-lg px-3 py-1.5 text-[13px] text-slate-100 focus:outline-none focus:border-signal/50"
             >
-              {reps.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.title} {r.name}
-                  {r.party ? ` (${r.party})` : ""}
-                  {r.chamber === "House" && r.district ? ` — District ${r.district}` : ""}
-                </option>
-              ))}
+              {groups.federal.length > 0 && (
+                <optgroup label="Federal — U.S. Congress">
+                  {groups.federal.map((r) => (
+                    <RepOption key={r.id} rep={r} />
+                  ))}
+                </optgroup>
+              )}
+              {groups.state.length > 0 && (
+                <optgroup label="State legislature">
+                  {groups.state.map((r) => (
+                    <RepOption key={r.id} rep={r} />
+                  ))}
+                </optgroup>
+              )}
             </select>
             <button
               onClick={generate}
@@ -156,8 +202,20 @@ export function ContactRep({ stateCode, jurisdiction, billIdentifier, billTitle,
             </button>
           </div>
 
+          {groups.state.length === 0 && sources.state === "empty" && (
+            <p className="text-[11px] text-slate-500">
+              State legislators need your location — start from a bill on the Pulse Map to include them.
+            </p>
+          )}
+
           {draft && selected && (
             <div className="rounded-xl border border-line bg-ink/40 p-3 space-y-2">
+              <div className="text-[12px] text-slate-300">
+                <span className="text-slate-500">To:</span> {selected.title} {selected.name}
+                {selected.mailable && selected.email ? (
+                  <span className="text-slate-500"> &lt;{selected.email}&gt;</span>
+                ) : null}
+              </div>
               <div className="text-[12px] text-slate-300">
                 <span className="text-slate-500">Subject:</span> {draft.subject}
               </div>
@@ -168,12 +226,12 @@ export function ContactRep({ stateCode, jurisdiction, billIdentifier, billTitle,
                 className="w-full bg-surface/40 border border-line rounded-lg p-2.5 text-[12px] text-slate-200 leading-relaxed resize-y focus:outline-none"
               />
               <div className="flex flex-wrap items-center gap-2">
-                {selected.email ? (
+                {selected.mailable && mailto ? (
                   <a
                     href={mailto}
                     className="flex items-center gap-1.5 text-[12px] font-medium text-ink bg-signal hover:bg-signal-bright rounded-lg px-3 py-1.5 transition-colors"
                   >
-                    <Mail className="w-3.5 h-3.5" /> Open in email
+                    <Mail className="w-3.5 h-3.5" /> Open prefilled email
                   </a>
                 ) : selected.contactUrl ? (
                   <a
@@ -192,9 +250,14 @@ export function ContactRep({ stateCode, jurisdiction, billIdentifier, billTitle,
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   {copied ? "Copied" : "Copy"}
                 </button>
-                {!selected.email && !selected.contactUrl && (
+                {!selected.mailable && !selected.contactUrl && (
                   <span className="text-[11px] text-slate-500">
                     No public email or form listed — copy the draft and use their office contact page.
+                  </span>
+                )}
+                {!selected.mailable && selected.contactUrl && (
+                  <span className="text-[11px] text-slate-500">
+                    This office takes messages via webform — copy the draft to paste in.
                   </span>
                 )}
                 <span className={cn("text-[10px] ml-auto", draft.source === "llm" ? "text-signal-bright" : "text-slate-500")}>
@@ -209,5 +272,19 @@ export function ContactRep({ stateCode, jurisdiction, billIdentifier, billTitle,
         </div>
       )}
     </div>
+  );
+}
+
+function RepOption({ rep }: { rep: Representative }) {
+  const district =
+    rep.chamber === "House" && rep.district ? ` — District ${rep.district}` : "";
+  const mail = rep.mailable ? " ✉" : "";
+  return (
+    <option value={rep.id}>
+      {rep.title} {rep.name}
+      {rep.party ? ` (${rep.party})` : ""}
+      {district}
+      {mail}
+    </option>
   );
 }

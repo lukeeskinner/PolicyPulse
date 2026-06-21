@@ -35,6 +35,12 @@ export default function Home() {
       qs.set("jurisdiction", area.region);
       qs.set("state", area.regionCode);
       qs.set("label", area.label);
+      // Pass coordinates so the simulator can look up the user's specific
+      // state legislators (OpenStates geo) for the "email your rep" flow.
+      if (Number.isFinite(area.lat) && Number.isFinite(area.lng)) {
+        qs.set("lat", String(area.lat));
+        qs.set("lng", String(area.lng));
+      }
     }
     router.push(`/simulate?${qs.toString()}`);
   };

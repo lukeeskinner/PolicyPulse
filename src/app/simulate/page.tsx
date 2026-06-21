@@ -133,10 +133,16 @@ function SimulateDashboard() {
               const policyText = state.meta?.policy ?? initialPolicy ?? "";
               const jurisdiction = state.meta?.jurisdiction ?? initialJurisdiction ?? "our community";
               const stateCode = params.get("state") || stateByName(jurisdiction)?.abbr || undefined;
+              const latParam = params.get("lat");
+              const lngParam = params.get("lng");
+              const lat = latParam ? Number(latParam) : undefined;
+              const lng = lngParam ? Number(lngParam) : undefined;
               const { identifier, title } = splitBill(policyText, state.policyModel?.title);
               return (
                 <ContactRep
                   stateCode={stateCode}
+                  lat={Number.isFinite(lat) ? lat : undefined}
+                  lng={Number.isFinite(lng) ? lng : undefined}
                   jurisdiction={jurisdiction}
                   billIdentifier={identifier}
                   billTitle={title}
