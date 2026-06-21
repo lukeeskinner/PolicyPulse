@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Quote, Sparkles, X } from "lucide-react";
+import { Loader2, Pause, Play, Quote, Sparkles, Volume2, X } from "lucide-react";
 import type { AgentHistoryEntry, Outcome, Persona } from "@/lib/types";
 import { groupColor, OUTCOME_COLORS, OUTCOME_LABEL, roleShort } from "@/lib/ui";
 import { cn, fmtPct, fmtUSD } from "@/lib/utils";
@@ -108,6 +108,7 @@ export function AgentDrawer({ runId, agentId, onClose }: Props) {
                       )}
                     </div>
                     <p className="text-sm text-slate-200 leading-relaxed italic">{data.story}</p>
+                    <StoryVoice story={data.story} resetKey={agentId ?? ""} />
                   </div>
 
                   {/* trajectory */}
@@ -136,6 +137,119 @@ export function AgentDrawer({ runId, agentId, onClose }: Props) {
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+// Voices the resident's story aloud via Deepgram Aura (server-side proxy).
+// Degrades quietly: if voice isn't configured the control hides; any failure
+// surfaces a disabled "voice unavailable" state and never touches the text.
+function StoryVoice({ story, resetKey }: { story: string; resetKey: string }) {
+  const [available, setAvailable] = useState<boolean | null>(null);
+  const [status, setStatus] = useState<"idle" | "loading" | "playing" | "error">("idle");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const urlRef = useRef<string | null>(null);
+
+  // Capability check — only show the control when the server has a Deepgram key.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/speak")
+      .then((r) => (r.ok ? r.json() : { configured: false }))
+      .then((d: { configured?: boolean }) => !cancelled && setAvailable(!!d.configured))
+      .catch(() => !cancelled && setAvailable(false));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Reset playback when switching residents.
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    if (urlRef.current) {
+      URL.revokeObjectURL(urlRef.current);
+      urlRef.current = null;
+    }
+    setStatus("idle");
+  }, [resetKey]);
+
+  // Cleanup on unmount.
+  useEffect(() => {
+    return () => {
+      if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+    };
+  }, []);
+
+  const toggle = async () => {
+    const audio = audioRef.current;
+    if (status === "playing") {
+      audio?.pause();
+      return;
+    }
+    // Resume if we already have the audio loaded.
+    if (audio && urlRef.current) {
+      await audio.play().catch(() => setStatus("error"));
+      return;
+    }
+    setStatus("loading");
+    try {
+      const res = await fetch("/api/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: story }),
+      });
+      if (!res.ok) {
+        setStatus("error");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      urlRef.current = url;
+      const el = new Audio(url);
+      audioRef.current = el;
+      el.onplay = () => setStatus("playing");
+      el.onpause = () => setStatus((s) => (s === "playing" ? "idle" : s));
+      el.onended = () => setStatus("idle");
+      el.onerror = () => setStatus("error");
+      await el.play();
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  if (available === null || available === false) return null;
+
+  return (
+    <div className="mt-3 flex items-center gap-2">
+      <button
+        onClick={toggle}
+        disabled={status === "loading"}
+        className="flex items-center gap-1.5 text-[12px] font-medium text-ink bg-signal hover:bg-signal-bright disabled:opacity-60 rounded-lg px-3 py-1.5 transition-colors"
+      >
+        {status === "loading" ? (
+          <>
+            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating voice…
+          </>
+        ) : status === "playing" ? (
+          <>
+            <Pause className="w-3.5 h-3.5" /> Pause
+          </>
+        ) : (
+          <>
+            <Play className="w-3.5 h-3.5" /> Hear their story
+          </>
+        )}
+      </button>
+      {status === "error" ? (
+        <span className="text-[11px] text-slate-500">Voice unavailable</span>
+      ) : (
+        <span className="flex items-center gap-1 text-[10px] text-slate-500">
+          <Volume2 className="w-3 h-3" /> Deepgram Aura
+        </span>
+      )}
+    </div>
   );
 }
 
