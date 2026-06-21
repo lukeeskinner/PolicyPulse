@@ -1,10 +1,10 @@
-import { Agent } from "@mastra/core/agent";
-import { roleLabel } from "@/lib/engine";
-import { templateNarrative } from "@/lib/narrative";
-import type { AgentRecord, PolicyModel } from "@/lib/types";
-import { fmtPct, fmtUSD } from "@/lib/utils";
+import {Agent} from "@mastra/core/agent";
+import {roleLabel} from "@/lib/engine";
+import {templateNarrative} from "@/lib/narrative";
+import type {AgentRecord, PolicyModel} from "@/lib/types";
+import {fmtPct, fmtUSD} from "@/lib/utils";
 
-const MODEL = process.env.POLICYPULSE_RESIDENT_MODEL || "anthropic/claude-haiku-4-5";
+const MODEL = process.env.POLICYPULSE_RESIDENT_MODEL || "anthropic/claude-sonnet-4-6";
 
 export const residentAgent = new Agent({
   id: "resident",
@@ -38,16 +38,16 @@ function buildBrief(record: AgentRecord, model: PolicyModel): string {
 export async function narrateResident(
   record: AgentRecord,
   model: PolicyModel,
-): Promise<{ story: string; source: "llm" | "template" }> {
+): Promise<{story: string; source: "llm" | "template"}> {
   if (!process.env.ANTHROPIC_API_KEY) {
-    return { story: templateNarrative(record, model), source: "template" };
+    return {story: templateNarrative(record, model), source: "template"};
   }
   try {
     const res = await residentAgent.generate(buildBrief(record, model));
     const text = res.text?.trim();
-    if (text && text.length > 40) return { story: text, source: "llm" };
+    if (text && text.length > 40) return {story: text, source: "llm"};
   } catch {
     /* fall through to template */
   }
-  return { story: templateNarrative(record, model), source: "template" };
+  return {story: templateNarrative(record, model), source: "template"};
 }

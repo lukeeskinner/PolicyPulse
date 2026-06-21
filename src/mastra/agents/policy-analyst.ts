@@ -1,9 +1,9 @@
-import { Agent } from "@mastra/core/agent";
-import { heuristicPolicyModel } from "@/lib/policy";
-import { analystSchema, toPolicyModel } from "@/lib/schemas";
-import type { PolicyModel } from "@/lib/types";
+import {Agent} from "@mastra/core/agent";
+import {heuristicPolicyModel} from "@/lib/policy";
+import {analystSchema, toPolicyModel} from "@/lib/schemas";
+import type {PolicyModel} from "@/lib/types";
 
-const MODEL = process.env.POLICYPULSE_ANALYST_MODEL || "anthropic/claude-haiku-4-5";
+const MODEL = process.env.POLICYPULSE_ANALYST_MODEL || "anthropic/claude-sonnet-4-6";
 
 export const policyAnalystAgent = new Agent({
   id: "policy-analyst",
@@ -34,7 +34,7 @@ export async function runPolicyAnalysis(raw: string, jurisdiction: string): Prom
   try {
     const res = await policyAnalystAgent.generate(
       `Jurisdiction: ${jurisdiction}\n\nProposed policy / bill text:\n"""\n${raw}\n"""\n\nProduce the structured impact model now.`,
-      { structuredOutput: { schema: analystSchema, errorStrategy: "warn" } },
+      {structuredOutput: {schema: analystSchema, errorStrategy: "warn"}},
     );
     if (res.object) return toPolicyModel(res.object, raw);
     return fallback;

@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowDown, ArrowLeft, ArrowUp, ExternalLink, FlaskConical, FlaskRound, Layers, Minus, Play } from "lucide-react";
-import { PulseLine } from "@/components/Brand";
+import { motion } from "framer-motion";
+import { ArrowDown, ArrowUp, ExternalLink, FlaskRound, Gavel, Ghost, Layers, Map as MapIcon, Minus, Play } from "lucide-react";
+import { AppHeader, NavPill } from "@/components/AppHeader";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import type { ActualMetric, HistoricalCase } from "@/lib/historical";
 import { cn } from "@/lib/utils";
+
+const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
+const item = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const } } };
 
 type Direction = "up" | "down" | "mixed";
 interface Predicted { value: number; display: string; direction: Direction }
@@ -38,36 +41,24 @@ export default function ValidatePage() {
 
   return (
     <div className="min-h-screen">
-      <header className="relative border-b border-line backdrop-blur sticky top-0 z-30 bg-ink/80">
-        <div className="max-w-5xl mx-auto px-4 lg:px-6 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-sm text-slate-300 hover:text-signal-bright transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back to dashboard
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link href="/lab" className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors">
-              <Layers className="w-3.5 h-3.5" /> Lab
-            </Link>
-            <Link href="/runs" className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors">
-              <FlaskRound className="w-3.5 h-3.5" /> Runs
-            </Link>
-            <div className="flex items-center gap-2 text-slate-200 ml-1">
-              <FlaskConical className="w-4 h-4 text-signal" />
-              <span className="font-display text-sm font-semibold text-slate-100">Historical validation</span>
-            </div>
-            <ThemeToggle />
-          </div>
-        </div>
-        <PulseLine width={1400} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />
-      </header>
+      <AppHeader section="Validation" subtitle="Does the model match reality?">
+        <NavPill href="/" icon={<MapIcon className="w-3.5 h-3.5" />} label="Pulse Map" />
+        <NavPill href="/ghost" icon={<Ghost className="w-3.5 h-3.5" />} label="Ghost" />
+        <NavPill href="/council" icon={<Gavel className="w-3.5 h-3.5" />} label="Council" />
+        <NavPill href="/lab" icon={<Layers className="w-3.5 h-3.5" />} label="Lab" />
+        <NavPill href="/runs" icon={<FlaskRound className="w-3.5 h-3.5" />} label="Runs" />
+        <ThemeToggle />
+      </AppHeader>
 
-      <main className="max-w-5xl mx-auto px-4 lg:px-6 py-6 pb-20">
-        <p className="text-sm text-slate-400 max-w-2xl mb-6">
+      <main className="max-w-[1100px] mx-auto px-4 lg:px-6 py-6 pb-16">
+        <h2 className="font-display text-xl text-slate-100">Historical validation</h2>
+        <p className="text-sm text-slate-400 max-w-2xl mb-6 mt-1">
           Does the model get reality right? Each card runs a real, studied policy through the same PolicyPulse engine and compares the predicted <em>direction</em> of effects against the documented findings of a published study. Figures are approximate reference points for directional validation.
         </p>
 
-        <div className="space-y-4">
+        <motion.div variants={container} initial="hidden" animate="show" className="space-y-4">
           {cases.map((c) => (
-            <div key={c.id} className="glass rounded-2xl p-5">
+            <motion.div key={c.id} variants={item} className="glass rounded-2xl p-5 hover:border-line/80 transition-colors">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
@@ -100,9 +91,9 @@ export default function ValidatePage() {
                   <Row key={m.key} actual={m} predicted={results[c.id]?.[m.key]} />
                 ))}
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </main>
     </div>
   );

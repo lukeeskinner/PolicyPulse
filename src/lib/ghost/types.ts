@@ -82,7 +82,6 @@ export interface GhostAgent {
   id: string; // "grid"
   role: AgentRole;
   name: string; // "GridAgent"
-  fetchAddress: string; // fetch1... pseudo-address (Fetch.ai identity)
   color: string;
   blurb: string; // one-line mandate
 }
@@ -212,17 +211,17 @@ export interface Narration {
 // Scenario + grounding
 // ---------------------------------------------------------------------------
 
-export type Domain = "power" | "water" | "av_fleet" | "hospital";
+export type Domain = "power" | "water" | "av_fleet" | "hospital" | "generic";
 
 export interface Advisory {
-  id: string; // "CISA ICS-CERT 24-074-01"
+  id: string; // e.g. "CISA-LIVE-1"
   title: string;
   detail: string;
   url?: string;
 }
 
 export interface Grounding {
-  source: "browserbase" | "seed";
+  source: "browserbase" | "none";
   advisories: Advisory[];
   notes: string;
 }
@@ -238,7 +237,7 @@ export interface Scenario {
   nodes: WorldNode[];
   agentRoles: AgentRole[];
   grounding: Grounding;
-  source: "llm" | "heuristic";
+  source: "llm"; // always Claude-generated from the prompt + grounding
 }
 
 // ---------------------------------------------------------------------------

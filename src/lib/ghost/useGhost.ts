@@ -131,14 +131,15 @@ function applyEvent(d: GhostState, e: GhostEvent) {
       d.meta = e.meta;
       d.integrations = e.integrations;
       break;
+    case "grounding":
+      d.grounding = e.grounding;
+      d.phase = "grounding";
+      break;
     case "scenario_parsed":
       d.scenario = e.scenario;
       d.timeLimit = e.scenario.timeLimitSec;
       d.secondsRemaining = e.scenario.timeLimitSec;
-      d.phase = "grounding";
-      break;
-    case "grounding":
-      d.grounding = e.grounding;
+      d.phase = "deploying";
       break;
     case "orkes_workflow":
       d.orkes = { workflowId: e.workflowId, url: e.url };

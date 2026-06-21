@@ -5,7 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ArrowRight, Crosshair, FlaskRound, Ghost, Landmark, Layers, Loader2, Radar, Search, UserRound } from "lucide-react";
+import { motion } from "framer-motion";
+import { AlertTriangle, ArrowRight, Crosshair, FlaskRound, Gavel, Ghost, Landmark, Layers, Loader2, Radar, Search, UserRound } from "lucide-react";
 import { PulseLine } from "@/components/Brand";
 import { LocationBadge } from "@/components/LocationBadge";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -14,6 +15,12 @@ import type { Bill, LocationError, SourceState, UserArea } from "@/lib/civic";
 import { usePulse, type PulseSnapshot } from "@/lib/usePulse";
 
 const HAS_MAP = !!process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
+const reveal = (delay = 0) => ({
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] as const },
+});
 
 const PulseMap = dynamic(() => import("@/components/PulseMap").then((m) => m.PulseMap), {
   ssr: false,
@@ -97,6 +104,12 @@ export default function Home() {
               <Ghost className="w-3.5 h-3.5" /> Ghost Protocol
             </Link>
             <Link
+              href="/council"
+              className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"
+            >
+              <Gavel className="w-3.5 h-3.5" /> Council
+            </Link>
+            <Link
               href="/lab"
               className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"
             >
@@ -121,9 +134,11 @@ export default function Home() {
       </header>
 
       <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 lg:px-6 py-4 flex flex-col gap-4">
-        <HeroLine area={snapshot.area} totalBills={totalBills} loading={snapshot.loadingPolicies} />
+        <motion.div {...reveal(0)}>
+          <HeroLine area={snapshot.area} totalBills={totalBills} loading={snapshot.loadingPolicies} />
+        </motion.div>
 
-        <div className="grid grid-cols-12 gap-4">
+        <motion.div {...reveal(0.08)} className="grid grid-cols-12 gap-4">
           <div className="col-span-12 lg:col-span-8 relative rounded-2xl min-h-[480px] h-[calc(100vh-300px)]">
             <PulseMap
               geo={snapshot.geo}
@@ -146,9 +161,11 @@ export default function Home() {
               area={snapshot.area}
             />
           </div>
-        </div>
+        </motion.div>
 
-        <MissionBand snapshot={snapshot} />
+        <motion.div {...reveal(0.16)}>
+          <MissionBand snapshot={snapshot} />
+        </motion.div>
       </main>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Activity, Brain, ChevronDown, Cpu, ShieldAlert, Sparkles, Timer } from "lucide-react";
 import type { GhostAgent, PostMortem as PostMortemData, TraceSpan } from "@/lib/ghost/types";
 import { cn } from "@/lib/utils";
@@ -114,7 +115,16 @@ function SpanRow({ span }: { span: TraceSpan }) {
         <span className="font-data text-[9px] text-slate-600 shrink-0">{span.latencyMs}ms</span>
         <ChevronDown className={cn("w-4 h-4 text-slate-500 shrink-0 transition-transform", open && "rotate-180")} />
       </button>
+      <AnimatePresence initial={false}>
       {open && (
+        <motion.div
+          key="body"
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+          className="overflow-hidden"
+        >
         <div className="px-3 pb-3 space-y-2.5 border-t border-line pt-2.5">
           <Field label="Context observed" value={span.context} />
           <Field label="Rationale" value={span.rationale} accent={llm} />
@@ -142,7 +152,9 @@ function SpanRow({ span }: { span: TraceSpan }) {
           )}
           <div className="font-data text-[9px] text-slate-600">world {span.worldHash}</div>
         </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }
