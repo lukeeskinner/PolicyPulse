@@ -59,14 +59,16 @@ export default function Home() {
       <header className="relative border-b border-line backdrop-blur sticky top-0 z-30 bg-ink/80">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Image
-              src="/policypulse-icon.png"
-              alt="PolicyPulse logo"
-              width={36}
-              height={36}
-              priority
-              className="w-9 h-9 rounded-xl ring-1 ring-line shadow-[0_0_18px_rgba(110,139,255,0.28)]"
-            />
+            <div className="relative w-9 h-9 overflow-hidden rounded-xl ring-1 ring-line shadow-[0_0_18px_rgba(110,139,255,0.28)] bg-surface">
+              <Image
+                src="/policypulse-icon.png"
+                alt="PolicyPulse logo"
+                width={54}
+                height={54}
+                priority
+                className="absolute left-1/2 top-1/2 w-[54px] h-[54px] max-w-none -translate-x-1/2 -translate-y-1/2 object-cover"
+              />
+            </div>
             <div>
               <h1 className="font-display text-base font-semibold tracking-tight text-slate-50 leading-none">
                 Policy<span className="text-signal-bright">Pulse</span>
