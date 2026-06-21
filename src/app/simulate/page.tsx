@@ -72,10 +72,14 @@ function SimulateDashboard() {
 
   const active = state.status !== "idle";
   const analysisReady = state.status === "complete" && !!state.analysis;
+  // Prefer the analysis's post-finalize per-group metrics (impactScore is only
+  // populated at finalize). Fall back to the latest round's group metrics.
   const byGroup =
+    (state.analysis?.byGroup?.length ? state.analysis.byGroup : undefined) ??
     [...(state.snapshot?.metricsByRound ?? state.metrics)]
       .sort((a, b) => b.round - a.round)
-      .find((m) => m.byGroup.length > 0)?.byGroup ?? [];
+      .find((m) => m.byGroup.length > 0)?.byGroup ??
+    [];
 
   return (
     <div className="min-h-screen">
@@ -128,7 +132,7 @@ function SimulateDashboard() {
 
           <div className="col-span-12 lg:col-span-3">
             <div className="lg:sticky lg:top-[72px] h-[520px] lg:h-[calc(100vh-92px)]">
-              <EventTicker items={state.ticker} />
+              <EventTicker items={state.ticker} status={state.status} analysis={state.analysis} />
             </div>
           </div>
         </div>

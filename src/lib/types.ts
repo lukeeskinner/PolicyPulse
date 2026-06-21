@@ -256,6 +256,9 @@ export interface Analysis {
   unintended: UnintendedConsequence[];
   whoGetsHurt: SegmentImpact[];
   winners: SegmentImpact[];
+  // Per-group metrics computed AFTER finalize, so impactScore is populated
+  // (the per-round metrics are computed mid-run before finalize sets it).
+  byGroup: GroupMetric[];
 }
 
 // ---------------------------------------------------------------------------

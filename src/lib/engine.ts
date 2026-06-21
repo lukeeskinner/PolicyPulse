@@ -225,6 +225,36 @@ export class SimulationEngine {
       }
     }
 
+    // PASS A.2 — zoning displacement: speculative redevelopment near upzoned
+    // corridors. External investors buy and demolish naturally-affordable units
+    // in gentrifying districts before replacement supply arrives, pushing out
+    // low-rent tenants. This makes the engine deliver the "speculative land
+    // buying" + "front-loaded demolition" displacement the zoning model's own
+    // mechanism/unintended consequences already describe.
+    if (this.model.type === "zoning") {
+      for (const t of this.active()) {
+        if (t.current.displaced) continue;
+        const p = t.persona;
+        if (p.tenure !== "renter" || shocks.has(p.id)) continue;
+        const nb = this.profile.neighborhoods.find((n) => n.name === p.neighborhood);
+        const gentr = nb?.gentrification ?? 0;
+        if (gentr <= 0.4) continue; // only naturally-affordable, gentrifying areas
+        const exposure = p.lowWage ? 1 : 0.4; // low-rent tenants are most exposed
+        const prob =
+          (this.model.supplyElasticity ?? 0.6) * this.model.intensity * 0.12 * gentr * exposure * (0.5 + tf);
+        if (this.rng() < prob) {
+          shocks.set(p.id, { displace: this.rng() < 0.6, reason: "speculative redevelopment after upzoning" });
+          this.supplyIndex = clamp(this.supplyIndex - (100 / Math.max(this.agents.length, 1)) * 0.8, 80, 130);
+          cascades.push({
+            round: round.index,
+            kind: "redevelopment",
+            description: `Speculative redevelopment after upzoning forced ${p.name} out of ${p.neighborhood} before new units arrived`,
+            toIds: [p.id],
+          });
+        }
+      }
+    }
+
     // PASS B — apply drift + policy + shocks to every agent ------------------
     const updates: RoundUpdate[] = [];
     for (const a of this.agents) {
