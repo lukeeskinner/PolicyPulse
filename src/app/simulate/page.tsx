@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Check, Cpu, FlaskConical, FlaskRound, Ghost, Layers, Link2, Map as MapIcon, Users2 } from "lucide-react";
+import { Check, Cpu, FlaskConical, FlaskRound, Ghost, Layers, Link2, Map as MapIcon, UserRound, Users2 } from "lucide-react";
 import { PulseMark, PulseLine } from "@/components/Brand";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AgentDrawer } from "@/components/AgentDrawer";
@@ -98,6 +98,7 @@ function SimulateDashboard() {
             <PhasePill phase={state.phase} status={state.status} round={state.currentRound} />
             {state.status === "complete" && state.runId && <ShareRunButton runId={state.runId} />}
             <NavPill href="/" icon={<MapIcon className="w-3.5 h-3.5" />} label="Pulse Map" />
+            <NavPill href="/me" icon={<UserRound className="w-3.5 h-3.5" />} label="My Pulse" />
             <NavPill href="/ghost" icon={<Ghost className="w-3.5 h-3.5" />} label="Ghost" />
             <NavPill href="/lab" icon={<Layers className="w-3.5 h-3.5" />} label="Lab" />
             <NavPill href="/runs" icon={<FlaskRound className="w-3.5 h-3.5" />} label="Runs" />

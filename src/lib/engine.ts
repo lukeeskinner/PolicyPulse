@@ -23,7 +23,7 @@ import { clamp, RNG, rngInt } from "./utils";
 // The result is per-agent trajectories the inequality view dissects.
 // ============================================================================
 
-const INCOME_GROWTH = 0.03; // annual nominal income drift
+export const INCOME_GROWTH = 0.03; // annual nominal income drift
 
 export interface RoundUpdate {
   agentId: string;
@@ -46,11 +46,55 @@ interface Shock {
   reason?: string;
 }
 
-const TIME_PROFILES: Record<PolicyModel["timeProfile"], number[]> = {
+export const TIME_PROFILES: Record<PolicyModel["timeProfile"], number[]> = {
   frontloaded: [0.55, 0.8, 0.92, 1],
   gradual: [0.2, 0.5, 0.78, 1],
   delayed: [0.05, 0.22, 0.5, 1],
 };
+
+// ---------------------------------------------------------------------------
+// Pure, shared scoring helpers. Exported so the live SimulationEngine AND the
+// direct ("no simulation") personal-impact estimate score a persona with the
+// exact same math — the two can never drift apart.
+// ---------------------------------------------------------------------------
+
+/** An agent's net fortune under the policy (-1.2..1.2). */
+export function personaAlignment(p: Persona, model: PolicyModel): number {
+  const has = (key: string) =>
+    (p.roles as string[]).includes(key) ||
+    key === p.group ||
+    (key === "renter" && p.tenure === "renter") ||
+    (key === "owner" && p.tenure === "owner");
+  let a = 0;
+  for (const b of model.beneficiaries) if (has(b.key)) a += b.weight;
+  for (const c of model.burdened) if (has(c.key)) a -= c.weight;
+  // low-income renters are disproportionately exposed to housing stress
+  if (p.tenure === "renter" && p.lowWage) a += model.channels.stability * 0.2;
+  return clamp(a, -1.2, 1.2);
+}
+
+/** Wellbeing score (4..97) for a persona given its state under a policy. */
+export function computeWellbeing(
+  p: Persona,
+  medianIncome: number,
+  intensity: number,
+  rentBurden: number,
+  employed: boolean,
+  displaced: boolean,
+  left: boolean,
+  align: number,
+): number {
+  let wb = 72;
+  wb -= clamp(rentBurden - 0.3, 0, 0.7) * 100;
+  wb += p.income > medianIncome ? 6 : -4;
+  wb += p.tenure === "owner" ? 5 : 0;
+  if (!employed && p.roles.includes("worker")) wb -= 22;
+  if (displaced) wb -= 18;
+  if (left) wb -= 10;
+  if (p.lowWage) wb -= 3;
+  wb += align * 5 * intensity;
+  return Math.round(clamp(wb, 4, 97));
+}
 
 export class SimulationEngine {
   agents: AgentRecord[];
@@ -73,18 +117,10 @@ export class SimulationEngine {
   }
 
   // --- alignment: an agent's net fortune under the policy (-1.2..1.2) --------
+  // Delegates to the shared pure helper so the engine and the personal-impact
+  // estimate score alignment identically.
   private alignment(p: Persona): number {
-    const has = (key: string) =>
-      (p.roles as string[]).includes(key) ||
-      key === p.group ||
-      (key === "renter" && p.tenure === "renter") ||
-      (key === "owner" && p.tenure === "owner");
-    let a = 0;
-    for (const b of this.model.beneficiaries) if (has(b.key)) a += b.weight;
-    for (const c of this.model.burdened) if (has(c.key)) a -= c.weight;
-    // low-income renters are disproportionately exposed to housing stress
-    if (p.tenure === "renter" && p.lowWage) a += this.model.channels.stability * 0.2;
-    return clamp(a, -1.2, 1.2);
+    return personaAlignment(p, this.model);
   }
 
   private initRecord(p: Persona): AgentRecord {
@@ -113,6 +149,7 @@ export class SimulationEngine {
     };
   }
 
+  // Delegates to the shared pure helper, binding the engine's profile + model.
   private computeWellbeing(
     p: Persona,
     rentBurden: number,
@@ -121,16 +158,16 @@ export class SimulationEngine {
     left: boolean,
     align: number,
   ): number {
-    let wb = 72;
-    wb -= clamp(rentBurden - 0.3, 0, 0.7) * 100;
-    wb += p.income > this.profile.medianIncome ? 6 : -4;
-    wb += p.tenure === "owner" ? 5 : 0;
-    if (!employed && p.roles.includes("worker")) wb -= 22;
-    if (displaced) wb -= 18;
-    if (left) wb -= 10;
-    if (p.lowWage) wb -= 3;
-    wb += align * 5 * this.model.intensity;
-    return Math.round(clamp(wb, 4, 97));
+    return computeWellbeing(
+      p,
+      this.profile.medianIncome,
+      this.model.intensity,
+      rentBurden,
+      employed,
+      displaced,
+      left,
+      align,
+    );
   }
 
   private describeStatus(p: Persona, rentBurden: number, employed: boolean, displaced: boolean): string {

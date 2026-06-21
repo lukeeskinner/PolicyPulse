@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ArrowRight, Crosshair, FlaskRound, Ghost, Landmark, Layers, Loader2, Radar, Search } from "lucide-react";
+import { AlertTriangle, ArrowRight, Crosshair, FlaskRound, Ghost, Landmark, Layers, Loader2, Radar, Search, UserRound } from "lucide-react";
 import { PulseLine } from "@/components/Brand";
 import { LocationBadge } from "@/components/LocationBadge";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -84,6 +84,12 @@ export default function Home() {
               onSearch={search}
               onUseLocation={locate}
             />
+            <Link
+              href="/me"
+              className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"
+            >
+              <UserRound className="w-3.5 h-3.5" /> My Pulse
+            </Link>
             <Link
               href="/ghost"
               className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"

@@ -204,6 +204,88 @@ export interface PublicAgent {
 }
 
 // ---------------------------------------------------------------------------
+// Personalization: a single user-defined persona + a direct ("no simulation")
+// impact estimate. On the My Pulse page the user fills in a human-friendly
+// subset of persona fields; we map it to a full Persona and project that ONE
+// persona through the policy deterministically — no agent rounds, no cascades,
+// no RNG. Displacement / job loss surface as honest risk flags, never asserted.
+// ---------------------------------------------------------------------------
+
+/** Demographic group the user may optionally self-identify with. */
+export type PersonaGroup = "Black" | "Hispanic" | "Asian" | "White" | "Other";
+
+/**
+ * The human-entered persona. Age, householdSize, tenure, income,
+ * monthlyHousingCost and role are required; the rest are optional and default
+ * to non-identifying values (demographics default to "Prefer not to say").
+ */
+export interface UserPersona {
+  name?: string;
+  age: number;
+  householdSize: number;
+  tenure: Tenure;
+  income: number; // annual household income
+  monthlyHousingCost: number; // rent or mortgage, monthly
+  role: Role; // primary economic role; drives most of the alignment
+  sector?: string;
+  group?: PersonaGroup; // omitted = "Prefer not to say" (no group-based alignment)
+  nativity?: "native" | "immigrant"; // omitted = unspecified (treated as native)
+  savings?: number;
+}
+
+/** A before/after snapshot of the personal financial picture. */
+export interface PersonalSnapshot {
+  income: number;
+  monthlyHousingCost: number;
+  rentBurden: number; // (housing * 12) / income
+}
+
+/** Why the policy lands the way it does — a matched beneficiary/burdened key. */
+export interface PersonalReason {
+  kind: "benefit" | "burden";
+  key: string; // role or group key from the PolicyModel
+  label: string; // human label, e.g. "As a renter"
+  weight: number; // 0..1 strength of the match
+}
+
+/** A life channel the policy moves for this persona. */
+export interface PersonalChannel {
+  channel: Channel;
+  value: number; // -1..1 net societal direction
+  label: string;
+}
+
+export interface PersonalImpact {
+  outcome: Outcome; // better | stable | worse (displaced never asserted w/o sim)
+  impactScore: number; // -100..100 net welfare change for THIS persona
+  align: number; // -1.2..1.2 net alignment under the policy
+  headline: string;
+  summary: string;
+  before: PersonalSnapshot;
+  after: PersonalSnapshot; // projected to the Year-3 horizon
+  deltas: {
+    incomeAnnual: number; // after.income - before.income
+    housingAnnual: number; // (after - before) monthly * 12
+    rentBurdenPts: number; // after.rentBurden - before.rentBurden, in points
+    netAnnual: number; // incomeAnnual - housingAnnual (net cash effect)
+  };
+  reasons: PersonalReason[];
+  channels: PersonalChannel[];
+  risks: UnintendedConsequence[]; // consequences plausibly touching this persona
+}
+
+/** Trimmed policy model returned alongside a PersonalImpact (safe to ship). */
+export interface PersonalPolicyDigest {
+  title: string;
+  type: PolicyType;
+  summary: string;
+  mechanism: string;
+  confidence: number;
+  modelSource: "llm" | "heuristic";
+  intensity: number;
+}
+
+// ---------------------------------------------------------------------------
 // Metrics & inequality analysis
 // ---------------------------------------------------------------------------
 
