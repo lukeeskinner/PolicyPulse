@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-ink: #05070e;
+  --color-surface: #0b1120;
+  --color-surface-2: #111a2e;
+  --color-line: #1e293b;
+  --color-accent: #22d3ee;
+  --color-accent-2: #a855f7;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: #05070e;
+  color: #e2e8f0;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(60rem 60rem at 85% -10%, rgba(34, 211, 238, 0.08), transparent 60%),
+    radial-gradient(50rem 50rem at 0% 0%, rgba(168, 85, 247, 0.08), transparent 55%);
+  background-attachment: fixed;
+}
+
+/* Subtle blueprint grid used behind the simulation stage */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.glass {
+  background: linear-gradient(180deg, rgba(17, 26, 46, 0.85), rgba(11, 17, 32, 0.85));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.35), 0 0 24px rgba(34, 211, 238, 0.18);
+}
+
+@keyframes pp-pop {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pp-pop { animation: pp-pop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes pp-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.pp-pulse { animation: pp-pulse 1.4s ease-in-out infinite; }
+
+/* Thin custom scrollbars */
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.22); border-radius: 9999px; }
+*::-webkit-scrollbar-track { background: transparent; }
