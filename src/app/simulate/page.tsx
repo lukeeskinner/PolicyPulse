@@ -7,14 +7,24 @@ import { Cpu, FlaskConical, Map as MapIcon, Users2 } from "lucide-react";
 import { PulseMark, PulseLine } from "@/components/Brand";
 import { AgentDrawer } from "@/components/AgentDrawer";
 import { AgentGrid } from "@/components/AgentGrid";
+import { ContactRep } from "@/components/ContactRep";
 import { EventTicker } from "@/components/EventTicker";
 import { InequalitySpotlight } from "@/components/InequalitySpotlight";
 import { IngestionPanel } from "@/components/IngestionPanel";
 import { MetricsTimeline } from "@/components/MetricsTimeline";
 import { PolicyConsole } from "@/components/PolicyConsole";
+import { stateByName } from "@/lib/states";
 import { groupColor, OUTCOME_COLORS, OUTCOME_LABEL, PHASE_LABEL } from "@/lib/ui";
 import { useSimulation } from "@/lib/useSimulation";
 import { cn } from "@/lib/utils";
+
+// The policy text arriving from the Pulse Map is "IDENTIFIER — Title". Split it
+// back apart for the email draft; pasted free-text bills have no identifier.
+function splitBill(policy: string, modelTitle?: string): { identifier: string; title: string } {
+  const m = policy.match(/^(.+?)\s+—\s+(.+)$/);
+  if (m) return { identifier: m[1].trim(), title: m[2].trim() };
+  return { identifier: "this bill", title: modelTitle || policy.slice(0, 90) };
+}
 
 export default function SimulatePage() {
   return (
@@ -117,8 +127,23 @@ function SimulateDashboard() {
         </div>
 
         {analysisReady && state.analysis && (
-          <div className="mt-4">
+          <div className="mt-4 space-y-4">
             <InequalitySpotlight analysis={state.analysis} byGroup={byGroup} onSelectAgent={setSelected} />
+            {(() => {
+              const policyText = state.meta?.policy ?? initialPolicy ?? "";
+              const jurisdiction = state.meta?.jurisdiction ?? initialJurisdiction ?? "our community";
+              const stateCode = params.get("state") || stateByName(jurisdiction)?.abbr || undefined;
+              const { identifier, title } = splitBill(policyText, state.policyModel?.title);
+              return (
+                <ContactRep
+                  stateCode={stateCode}
+                  jurisdiction={jurisdiction}
+                  billIdentifier={identifier}
+                  billTitle={title}
+                  analysis={state.analysis!}
+                />
+              );
+            })()}
           </div>
         )}
       </main>

@@ -60,6 +60,28 @@ export const analystSchema = z.object({
 
 export type AnalystOutput = z.infer<typeof analystSchema>;
 
+// Structured output for the Advocate agent that drafts a constituent email.
+export const advocateEmailSchema = z.object({
+  subject: z.string().describe("Concise email subject line referencing the bill (<= 90 chars)"),
+  body: z
+    .string()
+    .describe(
+      "The full email body, first-person and respectful, citing the bill identifier and the named hurt/benefit segments. No salutation placeholders left blank — address the named representative.",
+    ),
+});
+
+export type AdvocateEmailOutput = z.infer<typeof advocateEmailSchema>;
+
+export interface EmailDraft {
+  subject: string;
+  body: string;
+  source: "llm" | "template";
+}
+
+export function toEmailDraft(out: AdvocateEmailOutput): EmailDraft {
+  return { subject: out.subject.slice(0, 120), body: out.body, source: "llm" };
+}
+
 export function toPolicyModel(out: AnalystOutput, raw: string): PolicyModel {
   return {
     type: out.type,
