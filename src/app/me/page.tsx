@@ -256,7 +256,7 @@ function PolicyPicker({
             onChange={(e) => setCustom(e.target.value)}
             rows={3}
             placeholder="e.g. Cap annual rent increases at 3% for existing tenants, with just-cause eviction protections."
-            className="w-full bg-surface/40 border border-line rounded-lg px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-signal/50 focus:ring-2 focus:ring-signal/40 transition-colors resize-y"
+            className="w-full bg-surface/40 border border-line rounded-lg px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus-visible:outline-none focus:border-transparent focus:ring-2 focus:ring-signal/70 transition-colors resize-y"
           />
           <button
             onClick={pickCustom}

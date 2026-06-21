@@ -278,7 +278,7 @@ function LocationPicker({ area, onResolve }: { area: UserArea | null; onResolve:
       )}
       {!area && (
         <div className="flex items-center gap-1.5">
-          <div className="search-pill flex-1 flex items-center gap-1.5 border border-line rounded-lg px-3 py-1.5 focus-within:border-signal/50 focus-within:ring-2 focus-within:ring-signal/40 transition-colors">
+          <div className="search-pill flex-1 flex items-center gap-1.5 border border-line rounded-lg px-3 py-1.5 focus-within:border-transparent focus-within:ring-2 focus-within:ring-signal/70 transition-colors">
             <Search className="w-3.5 h-3.5 text-slate-500" />
             <input
               value={q}
@@ -353,14 +353,14 @@ function TextInput({
   prefix?: string;
 }) {
   return (
-    <div className="flex items-center gap-1.5 border border-line rounded-lg px-3 py-2 bg-surface/40 focus-within:border-signal/50 focus-within:ring-2 focus-within:ring-signal/40 transition-colors">
+    <div className="flex items-center gap-1.5 border border-line rounded-lg px-3 py-2 bg-surface/40 focus-within:border-transparent focus-within:ring-2 focus-within:ring-signal/70 transition-colors">
       {prefix && <span className="text-slate-500 text-sm font-data">{prefix}</span>}
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         inputMode={inputMode}
-        className="bg-transparent text-sm text-slate-100 placeholder:text-slate-500 outline-none flex-1 w-full"
+        className="bg-transparent text-sm text-slate-100 placeholder:text-slate-500 outline-none focus-visible:outline-none flex-1 w-full"
       />
     </div>
   );
@@ -376,11 +376,11 @@ function SelectInput<T extends string>({
   options: { value: T; label: string }[];
 }) {
   return (
-    <div className="border border-line rounded-lg bg-surface/40 focus-within:border-signal/50 focus-within:ring-2 focus-within:ring-signal/40 transition-colors">
+    <div className="border border-line rounded-lg bg-surface/40 focus-within:border-transparent focus-within:ring-2 focus-within:ring-signal/70 transition-colors">
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className="w-full bg-transparent text-sm text-slate-100 outline-none px-3 py-2 appearance-none cursor-pointer"
+        className="w-full bg-transparent text-sm text-slate-100 outline-none focus-visible:outline-none px-3 py-2 appearance-none cursor-pointer"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value} className="bg-surface text-slate-100">
