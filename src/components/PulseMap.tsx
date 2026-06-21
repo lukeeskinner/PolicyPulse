@@ -28,15 +28,13 @@ function DeckOverlay(props: OverlayProps) {
   return null;
 }
 
-// --- "Point to locate" dwell tuning ----------------------------------------
-const DWELL_MS = 800; // how long the cursor must hold still before scanning
-const MOVE_THRESHOLD = 10; // px of drift (from the dwell anchor) that cancels it
+// --- "Click to locate" tuning ----------------------------------------------
 const DONE_HOLD_MS = 1800; // how long the "Area set" confirmation lingers
 const ERROR_HOLD_MS = 2800;
 
-type DwellStatus = "dwelling" | "scanning" | "done" | "error";
-interface DwellState {
-  status: DwellStatus;
+type ScanStatus = "scanning" | "done" | "error";
+interface ScanState {
+  status: ScanStatus;
   label: string;
 }
 
@@ -59,93 +57,67 @@ export function PulseMap({ geo, area, selectedId, onSelect, onPointToLocate }: P
   // The map stays dark in both themes — it reads as a live "instrument" panel
   // and avoids a style reload (and its transient fetch) on every theme toggle.
 
-  // Dwell-to-locate only makes sense with a real hover-capable pointer; on
-  // touch/coarse devices we gracefully skip it and lean on search. Computed
-  // lazily so it runs client-side without a setState-in-effect.
+  // A real hover pointer gets a precise follower reticle; click-to-locate works
+  // on any device (incl. touch tap). Computed lazily so it runs client-side
+  // without a setState-in-effect.
   const [hoverCapable] = useState(
     () =>
       typeof window !== "undefined" &&
       typeof window.matchMedia === "function" &&
       window.matchMedia("(hover: hover) and (pointer: fine)").matches,
   );
-  const canDwell = hoverCapable && !!onPointToLocate;
+  const canLocate = !!onPointToLocate;
 
-  const [reticle, setReticle] = useState<{ x: number; y: number } | null>(null);
-  const [dwell, setDwell] = useState<DwellState | null>(null);
+  const [hovering, setHovering] = useState(false);
+  const [scan, setScan] = useState<ScanState | null>(null);
 
-  const dwellTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reticleRef = useRef<HTMLDivElement | null>(null);
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const anchor = useRef<{ x: number; y: number } | null>(null);
-  const coord = useRef<{ lat: number; lng: number } | null>(null);
-  const scanSeq = useRef(0); // bumps on every move/scan so stale results are ignored
-
-  const clearDwellTimer = useCallback(() => {
-    if (dwellTimer.current) {
-      clearTimeout(dwellTimer.current);
-      dwellTimer.current = null;
-    }
-  }, []);
+  const scanSeq = useRef(0); // bumps per scan so a stale result can't overwrite a newer one
 
   const scheduleDismiss = useCallback((ms: number) => {
     if (dismissTimer.current) clearTimeout(dismissTimer.current);
-    dismissTimer.current = setTimeout(() => {
-      setDwell(null);
-      setReticle(null);
-    }, ms);
+    dismissTimer.current = setTimeout(() => setScan(null), ms);
   }, []);
 
-  // Fires once the cursor has held still for DWELL_MS.
-  const runScan = useCallback(async () => {
-    const c = coord.current;
-    if (!c || !onPointToLocate) return;
-    const seq = ++scanSeq.current;
-    setDwell({ status: "scanning", label: "Scanning this area\u2026" });
-    const resolved = await onPointToLocate(c.lat, c.lng);
-    if (scanSeq.current !== seq) return; // superseded by a newer dwell — ignore
-    if (resolved) {
-      setReticle(null);
-      setDwell({ status: "done", label: `Area set: ${shortLabel(resolved)}` });
-      scheduleDismiss(DONE_HOLD_MS);
-    } else {
-      setDwell({ status: "error", label: "Couldn\u2019t read that spot \u2014 search instead" });
-      scheduleDismiss(ERROR_HOLD_MS);
-    }
-  }, [onPointToLocate, scheduleDismiss]);
-
+  // Follow the pointer EXACTLY via a direct transform write (no React state, no
+  // movement threshold) so the reticle sits pixel-perfect under the cursor.
   const handleMove = useCallback(
     (e: MapMouseEvent) => {
-      if (!canDwell) return;
-      const { x, y } = e.point;
-      const a = anchor.current;
-      // Only react to meaningful movement (measured from the dwell anchor, so
-      // slow drift accumulates correctly) — never geocode on every mouse move.
-      if (a && Math.hypot(x - a.x, y - a.y) <= MOVE_THRESHOLD) return;
-
-      clearDwellTimer();
-      if (dismissTimer.current) clearTimeout(dismissTimer.current);
-      scanSeq.current++; // invalidate any in-flight scan / lingering confirmation
-      anchor.current = { x, y };
-      coord.current = { lat: e.lngLat.lat, lng: e.lngLat.lng };
-      setReticle({ x, y });
-      setDwell({ status: "dwelling", label: "Hold still to scan this area" });
-      dwellTimer.current = setTimeout(runScan, DWELL_MS);
+      if (!hoverCapable) return;
+      const el = reticleRef.current;
+      if (el) el.style.transform = `translate(${e.point.x}px, ${e.point.y}px) translate(-50%, -50%)`;
+      if (!hovering) setHovering(true);
     },
-    [canDwell, clearDwellTimer, runScan],
+    [hoverCapable, hovering],
   );
 
-  // Leaving the map cancels an in-progress dwell, but lets a finished
-  // confirmation linger (it auto-dismisses on its own timer).
-  const handleLeave = useCallback(() => {
-    clearDwellTimer();
-    anchor.current = null;
-    setReticle(null);
-    setDwell((d) => (d && (d.status === "done" || d.status === "error") ? d : null));
-    scanSeq.current++;
-  }, [clearDwellTimer]);
+  const handleLeave = useCallback(() => setHovering(false), []);
+
+  // Geocode ONLY on an explicit click, using the exact clicked lng/lat.
+  const handleClick = useCallback(
+    (e: MapMouseEvent) => {
+      onSelect(null); // close any open policy detail
+      if (!onPointToLocate) return;
+      const seq = ++scanSeq.current;
+      if (dismissTimer.current) clearTimeout(dismissTimer.current);
+      setScan({ status: "scanning", label: "Scanning this area\u2026" });
+      onPointToLocate(e.lngLat.lat, e.lngLat.lng).then((resolved) => {
+        if (scanSeq.current !== seq) return; // superseded by a newer click
+        if (resolved) {
+          setScan({ status: "done", label: `Area set: ${shortLabel(resolved)}` });
+          scheduleDismiss(DONE_HOLD_MS);
+        } else {
+          setScan({ status: "error", label: "Couldn\u2019t read that spot \u2014 search instead" });
+          scheduleDismiss(ERROR_HOLD_MS);
+        }
+      });
+    },
+    [onPointToLocate, onSelect, scheduleDismiss],
+  );
 
   useEffect(
     () => () => {
-      if (dwellTimer.current) clearTimeout(dwellTimer.current);
       if (dismissTimer.current) clearTimeout(dismissTimer.current);
     },
     [],
@@ -193,7 +165,8 @@ export function PulseMap({ geo, area, selectedId, onSelect, onPointToLocate }: P
         projection={{ name: "mercator" }}
         attributionControl={false}
         reuseMaps
-        onClick={() => onSelect(null)}
+        cursor={canLocate ? "crosshair" : "grab"}
+        onClick={handleClick}
         onMouseMove={handleMove}
         onMouseOut={handleLeave}
         style={{ width: "100%", height: "100%" }}
@@ -225,14 +198,25 @@ export function PulseMap({ geo, area, selectedId, onSelect, onPointToLocate }: P
         ))}
       </Map>
 
-      {/* Dwell reticle — a crosshair + a ring that fills over the dwell window. */}
-      {reticle && dwell && (dwell.status === "dwelling" || dwell.status === "scanning") && (
-        <DwellReticle x={reticle.x} y={reticle.y} status={dwell.status} />
+      {/* Pixel-exact follower reticle (hover devices). The OS crosshair marks the
+          precise point; this ring is the scanner accent and pulses while scanning. */}
+      {hoverCapable && (
+        <div
+          ref={reticleRef}
+          aria-hidden
+          className={`absolute left-0 top-0 w-10 h-10 z-20 pointer-events-none transition-opacity duration-200 ${hovering ? "opacity-100" : "opacity-0"}`}
+          style={{ transform: "translate(-9999px, -9999px)" }}
+        >
+          <span className="absolute inset-0 rounded-full border" style={{ borderColor: "var(--color-signal-bright)", opacity: 0.6 }} />
+          {scan?.status === "scanning" && (
+            <span className="absolute inset-0 rounded-full border-2 animate-ping" style={{ borderColor: "var(--color-signal-bright)" }} />
+          )}
+        </div>
       )}
 
-      {/* Single top-center message slot: scan status if active, else the ambient hint. */}
+      {/* Single top-center message slot: scan status if active, else the click hint. */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-max max-w-[calc(100%-1.5rem)]">
-        {dwell ? <ScanPill status={dwell.status} label={dwell.label} /> : canDwell ? <PointHint /> : null}
+        {scan ? <ScanPill status={scan.status} label={scan.label} /> : canLocate ? <ClickHint /> : null}
       </div>
 
       <MapLegend />
@@ -240,48 +224,7 @@ export function PulseMap({ geo, area, selectedId, onSelect, onPointToLocate }: P
   );
 }
 
-function DwellReticle({ x, y, status }: { x: number; y: number; status: DwellStatus }) {
-  const R = 18;
-  const C = 2 * Math.PI * R;
-  return (
-    <div
-      className="absolute z-20 pointer-events-none pp-pop"
-      style={{ left: x, top: y, transform: "translate(-50%, -50%)" }}
-    >
-      <svg width="48" height="48" viewBox="0 0 48 48" className="overflow-visible">
-        <circle cx="24" cy="24" r={R} fill="none" style={{ stroke: "var(--color-signal)", opacity: 0.22 }} strokeWidth="2" />
-        {status === "dwelling" ? (
-          <circle
-            cx="24"
-            cy="24"
-            r={R}
-            fill="none"
-            style={{ stroke: "var(--color-signal-bright)" }}
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeDasharray={C}
-            transform="rotate(-90 24 24)"
-            className="pp-dwell-ring"
-          />
-        ) : (
-          <circle cx="24" cy="24" r={R} fill="none" style={{ stroke: "var(--color-signal-bright)" }} strokeWidth="2.5" className="pp-pulse" />
-        )}
-        {/* crosshair ticks */}
-        <g style={{ stroke: "var(--color-signal-bright)" }} strokeWidth="1.5" strokeLinecap="round">
-          <line x1="24" y1="2" x2="24" y2="9" />
-          <line x1="24" y1="39" x2="24" y2="46" />
-          <line x1="2" y1="24" x2="9" y2="24" />
-          <line x1="39" y1="24" x2="46" y2="24" />
-        </g>
-      </svg>
-      <span className="absolute inset-0 flex items-center justify-center">
-        <span className="w-1.5 h-1.5 rounded-full bg-signal-bright shadow-[0_0_10px_rgba(159,176,255,0.95)]" />
-      </span>
-    </div>
-  );
-}
-
-function ScanPill({ status, label }: { status: DwellStatus; label: string }) {
+function ScanPill({ status, label }: { status: ScanStatus; label: string }) {
   // Border carries the semantic tone; the label stays neutral (text-slate-100)
   // so it reads on both the dark and the light glass.
   const tone =
@@ -289,7 +232,6 @@ function ScanPill({ status, label }: { status: DwellStatus; label: string }) {
   return (
     <div className={`pp-pop glass rounded-full border ${tone} text-slate-100 pl-2.5 pr-3 py-1.5 flex items-center gap-2 shadow-lg`}>
       <span className="flex items-center justify-center w-4 h-4 shrink-0">
-        {status === "dwelling" && <Crosshair className="w-4 h-4 text-signal-bright" />}
         {status === "scanning" && <Loader2 className="w-4 h-4 text-signal-bright animate-spin" />}
         {status === "done" && <Check className="w-4 h-4 text-emerald-300" />}
         {status === "error" && <AlertTriangle className="w-4 h-4 text-amber-300" />}
@@ -299,11 +241,11 @@ function ScanPill({ status, label }: { status: DwellStatus; label: string }) {
   );
 }
 
-function PointHint() {
+function ClickHint() {
   return (
-    <div className="glass rounded-full border border-line/80 px-3 py-1.5 flex items-center gap-2 opacity-80">
+    <div className="glass rounded-full border border-line/80 px-3 py-1.5 flex items-center gap-2 opacity-85">
       <Crosshair className="w-3.5 h-3.5 text-signal-bright" />
-      <span className="text-[11px] text-slate-300 whitespace-nowrap">Point anywhere to scan local policy</span>
+      <span className="text-[11px] text-slate-300 whitespace-nowrap">Click anywhere on the map to scan that area</span>
     </div>
   );
 }

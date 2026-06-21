@@ -1,15 +1,15 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowRight, Crosshair, FlaskRound, Ghost, Landmark, Layers, Loader2, Radar, Search } from "lucide-react";
-import { PulseMark, PulseLine } from "@/components/Brand";
+import { PulseLine } from "@/components/Brand";
 import { LocationBadge } from "@/components/LocationBadge";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NewsRail } from "@/components/NewsRail";
-import { PolicyDetail } from "@/components/PolicyDetail";
 import type { Bill, LocationError, SourceState, UserArea } from "@/lib/civic";
 import { usePulse, type PulseSnapshot } from "@/lib/usePulse";
 
@@ -18,6 +18,12 @@ const HAS_MAP = !!process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const PulseMap = dynamic(() => import("@/components/PulseMap").then((m) => m.PulseMap), {
   ssr: false,
   loading: () => <MapLoading />,
+});
+
+// Deferred: pulls in framer-motion and only renders once a marker is opened,
+// so it stays out of the initial homepage bundle.
+const PolicyDetail = dynamic(() => import("@/components/PolicyDetail").then((m) => m.PolicyDetail), {
+  ssr: false,
 });
 
 export default function Home() {
@@ -53,7 +59,14 @@ export default function Home() {
       <header className="relative border-b border-line backdrop-blur sticky top-0 z-30 bg-ink/80">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <PulseMark className="w-9 h-9" live />
+            <Image
+              src="/policypulse-icon.png"
+              alt="PolicyPulse logo"
+              width={36}
+              height={36}
+              priority
+              className="w-9 h-9 rounded-xl ring-1 ring-line shadow-[0_0_18px_rgba(110,139,255,0.28)]"
+            />
             <div>
               <h1 className="font-display text-base font-semibold tracking-tight text-slate-50 leading-none">
                 Policy<span className="text-signal-bright">Pulse</span>
@@ -179,7 +192,7 @@ function LocatePrompt({
         </div>
         <h3 className="font-display text-lg text-slate-100">Find the bills around you</h3>
         <p className="text-sm text-slate-400 mt-1.5">
-          Enter a ZIP code or city to map the real legislation moving near you.
+          Click anywhere on the map, or enter a ZIP / city, to map the real legislation moving near you.
         </p>
 
         {error && (
@@ -214,8 +227,8 @@ function LocatePrompt({
         >
           <Crosshair className="w-4 h-4" /> Use my location
         </button>
-        <p className="hidden [@media(hover:hover)_and_(pointer:fine)]:block text-[11px] text-slate-500 mt-3 leading-relaxed">
-          Or just point anywhere on the map and hold still to scan that spot.
+        <p className="text-[11px] text-slate-500 mt-3 leading-relaxed">
+          Tip: click any spot on the map to scan that exact area.
         </p>
       </div>
     </div>
