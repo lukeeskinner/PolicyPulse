@@ -128,7 +128,7 @@ function SimulateDashboard() {
 
           <div className="col-span-12 lg:col-span-3">
             <div className="lg:sticky lg:top-[72px] h-[520px] lg:h-[calc(100vh-92px)]">
-              <EventTicker items={state.ticker} />
+              <EventTicker items={state.ticker} status={state.status} analysis={state.analysis} />
             </div>
           </div>
         </div>
