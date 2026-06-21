@@ -6,6 +6,7 @@ import { Loader2, Pause, Play, Quote, Sparkles, Volume2, X } from "lucide-react"
 import type { AgentHistoryEntry, Outcome, Persona } from "@/lib/types";
 import { groupColor, OUTCOME_COLORS, OUTCOME_LABEL, roleShort } from "@/lib/ui";
 import { cn, fmtPct, fmtUSD } from "@/lib/utils";
+import { genderFromName } from "@/lib/voice";
 
 interface AgentDetail {
   persona: Persona;
@@ -108,7 +109,12 @@ export function AgentDrawer({ runId, agentId, onClose }: Props) {
                       )}
                     </div>
                     <p className="text-sm text-slate-200 leading-relaxed italic">{data.story}</p>
-                    <StoryVoice story={data.story} resetKey={agentId ?? ""} />
+                    <StoryVoice
+                      story={data.story}
+                      gender={genderFromName(data.persona.name)}
+                      age={data.persona.age}
+                      resetKey={agentId ?? ""}
+                    />
                   </div>
 
                   {/* trajectory */}
@@ -143,7 +149,17 @@ export function AgentDrawer({ runId, agentId, onClose }: Props) {
 // Voices the resident's story aloud via Deepgram Aura (server-side proxy).
 // Degrades quietly: if voice isn't configured the control hides; any failure
 // surfaces a disabled "voice unavailable" state and never touches the text.
-function StoryVoice({ story, resetKey }: { story: string; resetKey: string }) {
+function StoryVoice({
+  story,
+  gender,
+  age,
+  resetKey,
+}: {
+  story: string;
+  gender: string;
+  age: number;
+  resetKey: string;
+}) {
   const [available, setAvailable] = useState<boolean | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "playing" | "error">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -198,7 +214,7 @@ function StoryVoice({ story, resetKey }: { story: string; resetKey: string }) {
       const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: story }),
+        body: JSON.stringify({ text: story, gender, age }),
       });
       if (!res.ok) {
         setStatus("error");
