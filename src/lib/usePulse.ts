@@ -104,7 +104,7 @@ export function usePulse() {
   const errorFromStatus = (status?: SourceState): LocationError =>
     makeLocationError(status === "missing_key" ? "missing_key" : "notfound");
 
-  const resolveByCoords = useCallback(async (lat: number, lng: number) => {
+  const resolveByCoords = useCallback(async (lat: number, lng: number): Promise<UserArea | null> => {
     const data = await getJson<{ area: UserArea | null; status: SourceState }>(
       `/api/geo?lat=${lat}&lng=${lng}`,
     );
@@ -118,7 +118,17 @@ export function usePulse() {
       setLocationError(errorFromStatus(data?.status));
     }
     setLocating(false);
+    return data?.area ?? null;
   }, []);
+
+  // Resolve an area directly from a point on the map (the "point to locate"
+  // dwell affordance). Reuses the same coords path as browser geolocation so
+  // bills / news / census refresh identically; returns the area so the map can
+  // give inline, on-cursor feedback ("Area set: Oakland, CA").
+  const locatePoint = useCallback(
+    (lat: number, lng: number) => resolveByCoords(lat, lng),
+    [resolveByCoords],
+  );
 
   const search = useCallback(async (q: string) => {
     if (!q.trim()) return;
@@ -242,5 +252,5 @@ export function usePulse() {
     sources,
   };
 
-  return { snapshot, search, locate };
+  return { snapshot, search, locate, locatePoint };
 }

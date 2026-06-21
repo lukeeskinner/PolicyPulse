@@ -20,7 +20,7 @@ const PulseMap = dynamic(() => import("@/components/PulseMap").then((m) => m.Pul
 });
 
 export default function Home() {
-  const { snapshot, search, locate } = usePulse();
+  const { snapshot, search, locate, locatePoint } = usePulse();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const router = useRouter();
 
@@ -83,6 +83,7 @@ export default function Home() {
               area={snapshot.area}
               selectedId={selectedId}
               onSelect={(m) => setSelectedId(m?.id ?? null)}
+              onPointToLocate={locatePoint}
             />
             <PolicyDetail marker={selected} onClose={() => setSelectedId(null)} onSimulate={simulate} />
             {HAS_MAP && !snapshot.area && !snapshot.locating && (
@@ -187,6 +188,9 @@ function LocatePrompt({
         >
           <Crosshair className="w-4 h-4" /> Use my location
         </button>
+        <p className="hidden [@media(hover:hover)_and_(pointer:fine)]:block text-[11px] text-slate-500 mt-3 leading-relaxed">
+          Or just point anywhere on the map and hold still to scan that spot.
+        </p>
       </div>
     </div>
   );

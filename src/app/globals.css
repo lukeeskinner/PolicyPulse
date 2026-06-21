@@ -94,6 +94,14 @@ body {
 }
 .pp-pop { animation: pp-pop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
+/* "Point to locate" dwell ring — fills over the dwell window (keep in sync
+   with DWELL_MS in PulseMap.tsx). --pp-ring-c is the circle circumference. */
+@keyframes pp-dwell-ring {
+  from { stroke-dashoffset: var(--pp-ring-c, 113); }
+  to { stroke-dashoffset: 0; }
+}
+.pp-dwell-ring { animation: pp-dwell-ring 800ms linear forwards; }
+
 @keyframes pp-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
@@ -131,7 +139,7 @@ body {
 *::-webkit-scrollbar-track { background: transparent; }
 
 @media (prefers-reduced-motion: reduce) {
-  .pp-pop, .pp-pulse, .pp-scroll-x, .pp-vscroll, .animate-ping, .animate-spin, .animate-pulse {
+  .pp-pop, .pp-pulse, .pp-scroll-x, .pp-vscroll, .pp-dwell-ring, .animate-ping, .animate-spin, .animate-pulse {
     animation: none !important;
   }
 }
