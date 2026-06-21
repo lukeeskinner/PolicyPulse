@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   buildPulseGeo,
   type Bill,
@@ -76,7 +76,9 @@ async function getJson<T>(url: string): Promise<T | null> {
 
 export function usePulse() {
   const [area, setArea] = useState<UserArea | null>(null);
-  const [locating, setLocating] = useState(true);
+  // Start idle: the homepage loads instantly and fires NO data requests until
+  // the user picks an area (click the map / search / "Use my location").
+  const [locating, setLocating] = useState(false);
   const [needsLocation, setNeedsLocation] = useState(false);
   const [locationError, setLocationError] = useState<LocationError | null>(null);
 
@@ -96,8 +98,6 @@ export function usePulse() {
     census: "empty",
     geocode: "idle",
   });
-
-  const resolved = useRef(false);
 
   // Map a geocode call that produced no area onto an actionable error: a
   // missing Mapbox token vs. simply no US match for the coords/query.
@@ -187,13 +187,6 @@ export function usePulse() {
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 },
     );
   }, [resolveByCoords]);
-
-  // initial attempt on mount
-  useEffect(() => {
-    if (resolved.current) return;
-    resolved.current = true;
-    locate();
-  }, [locate]);
 
   // when the area changes, load every live slice in parallel
   useEffect(() => {

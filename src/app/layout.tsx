@@ -34,6 +34,11 @@ export const metadata: Metadata = {
   title: "PolicyPulse — See the law land before it passes",
   description:
     "A live civic map of the bills moving around you, paired with a demographic digital twin that shows exactly who each policy helps and who it hurts.",
+  icons: {
+    icon: "/policypulse-icon.png",
+    shortcut: "/policypulse-icon.png",
+    apple: "/policypulse-icon.png",
+  },
 };
 
 export default function RootLayout({
