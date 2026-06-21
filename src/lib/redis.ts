@@ -1,5 +1,13 @@
 import { createClient, type RedisClientType } from "redis";
-import type { RunMeta, SimEvent } from "./types";
+import type { Analysis, CascadeRecord, PolicyModel, RoundMetrics, RunMeta, SimEvent } from "./types";
+
+export interface RedisSnapshot {
+  meta: RunMeta;
+  policyModel: PolicyModel | null;
+  metricsByRound: RoundMetrics[];
+  analysis: Analysis | null;
+  cascades: CascadeRecord[];
+}
 
 // ============================================================================
 // Redis "nervous system" (optional, best-effort).
@@ -126,6 +134,19 @@ export async function indexRun(meta: RunMeta): Promise<void> {
 }
 
 // --- reads (best-effort cross-process) --------------------------------------
+
+export async function redisGetSnapshot(runId: string): Promise<RedisSnapshot | null> {
+  const c = await getRedis();
+  if (!c || !caps.json) return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = await (c as any).json.get(key.snapshot(runId));
+    if (!data || typeof data !== "object") return null;
+    return data as RedisSnapshot;
+  } catch {
+    return null;
+  }
+}
 
 export async function redisListRuns(limit = 20): Promise<RunMeta[]> {
   const c = await getRedis();

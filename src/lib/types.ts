@@ -332,3 +332,153 @@ export interface RunSnapshot {
   analysis?: Analysis;
   events: SimEvent[];
 }
+
+// ---------------------------------------------------------------------------
+// Analytics: Monte Carlo bands, scenario comparison, sensitivity sweeps.
+// A single deterministic run shows one stochastic draw; these aggregate many
+// draws so the dashboard can show distributions instead of point estimates.
+// ---------------------------------------------------------------------------
+
+/** Summary statistics for one quantity across many Monte Carlo draws. */
+export interface Band {
+  mean: number;
+  p10: number;
+  p90: number;
+  min: number;
+  max: number;
+}
+
+export interface MetricBand extends Band {
+  round: number;
+  label: string;
+}
+
+export interface OutcomeShareBand {
+  outcome: Outcome;
+  mean: number;
+  p10: number;
+  p90: number;
+}
+
+/** Per-cohort risk aggregated across draws (stable role/tenure cohorts). */
+export interface CohortRisk {
+  segment: string;
+  count: number; // mean cohort size across draws
+  meanImpact: number;
+  impactP10: number;
+  impactP90: number;
+  displacementProb: number; // mean share displaced or who left
+  hurtProb: number; // mean share with a net welfare loss
+}
+
+export interface PolicyDigest {
+  title: string;
+  type: PolicyType;
+  summary: string;
+  modelSource: "llm" | "heuristic";
+  confidence: number;
+}
+
+export interface MetricBands {
+  avgRentBurden: MetricBand[];
+  displacementRate: MetricBand[];
+  avgWellbeing: MetricBand[];
+  housingSupplyIndex: MetricBand[];
+}
+
+export interface MonteCarloResult {
+  draws: number;
+  agentCount: number;
+  jurisdiction: string;
+  policy: PolicyDigest;
+  bands: MetricBands;
+  outcomeShares: OutcomeShareBand[];
+  giniBefore: Band;
+  giniAfter: Band;
+  cohorts: CohortRisk[];
+  representativeRunId?: string; // a single persisted draw, for drill-down
+}
+
+export interface CompareFinalMetrics {
+  avgRentBurden: number;
+  displacementRate: number;
+  avgWellbeing: number;
+  housingSupplyIndex: number;
+  giniAfter: number;
+  loseShare: number;
+  winShare: number;
+}
+
+export interface CompareSide {
+  label: string;
+  policy: PolicyDigest;
+  final: CompareFinalMetrics;
+  bands: MetricBands;
+  outcomeShares: OutcomeShareBand[];
+  cohorts: CohortRisk[];
+}
+
+export interface CompareDiff {
+  key: string;
+  label: string;
+  a: number;
+  b: number;
+  delta: number; // b - a
+  better: "a" | "b" | "tie";
+  fmt: "pct" | "num" | "gini";
+}
+
+export interface CompareResult {
+  draws: number;
+  agentCount: number;
+  jurisdiction: string;
+  a: CompareSide;
+  b: CompareSide;
+  diffs: CompareDiff[];
+  cohortDiffs: { segment: string; aImpact: number; bImpact: number; delta: number }[];
+}
+
+export type SweepParam =
+  | "intensity"
+  | "supplyElasticity"
+  | "rentCapPct"
+  | "wageTarget"
+  | "marketRentGrowthPct";
+
+export type SweepUnit = "pct" | "usd" | "ratio";
+
+export interface SweepPoint {
+  value: number;
+  displacementRate: number;
+  loseShare: number;
+  giniAfter: number;
+  avgWellbeing: number;
+}
+
+export interface SweepSeries {
+  param: SweepParam;
+  label: string;
+  unit: SweepUnit;
+  baseline: number;
+  points: SweepPoint[];
+}
+
+export interface TornadoBar {
+  param: SweepParam;
+  label: string;
+  unit: SweepUnit;
+  low: number;
+  high: number;
+  outLow: number;
+  outHigh: number;
+  swing: number;
+}
+
+export interface SensitivityResult {
+  agentCount: number;
+  drawsPerPoint: number;
+  jurisdiction: string;
+  policy: { title: string; type: PolicyType };
+  primary: SweepSeries;
+  tornado: TornadoBar[];
+}

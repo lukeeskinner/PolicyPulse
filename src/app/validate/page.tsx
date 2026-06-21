@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowLeft, ArrowUp, ExternalLink, FlaskConical, Minus, Play } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, ExternalLink, FlaskConical, FlaskRound, Layers, Minus, Play } from "lucide-react";
 import { PulseLine } from "@/components/Brand";
 import type { ActualMetric, HistoricalCase } from "@/lib/historical";
 import { cn } from "@/lib/utils";
@@ -42,9 +42,17 @@ export default function ValidatePage() {
           <Link href="/" className="flex items-center gap-2 text-sm text-slate-300 hover:text-signal-bright transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to dashboard
           </Link>
-          <div className="flex items-center gap-2 text-slate-200">
-            <FlaskConical className="w-4 h-4 text-signal" />
-            <span className="font-display text-sm font-semibold text-slate-100">Historical validation</span>
+          <div className="flex items-center gap-2">
+            <Link href="/lab" className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors">
+              <Layers className="w-3.5 h-3.5" /> Lab
+            </Link>
+            <Link href="/runs" className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors">
+              <FlaskRound className="w-3.5 h-3.5" /> Runs
+            </Link>
+            <div className="flex items-center gap-2 text-slate-200 ml-1">
+              <FlaskConical className="w-4 h-4 text-signal" />
+              <span className="font-display text-sm font-semibold text-slate-100">Historical validation</span>
+            </div>
           </div>
         </div>
         <PulseLine width={1400} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />
