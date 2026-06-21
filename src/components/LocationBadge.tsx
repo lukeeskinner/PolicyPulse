@@ -50,7 +50,7 @@ export function LocationBadge({ area, locating, error, onSearch, onUseLocation }
 
       {open && (
         <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-1.5 border border-line focus-within:border-signal/50 rounded-full pl-3 pr-1.5 py-1 bg-surface/80 transition-colors">
+          <div className="search-pill flex items-center gap-1.5 border border-line focus-within:border-signal/50 focus-within:ring-2 focus-within:ring-signal/40 rounded-full pl-3 pr-1.5 py-1 bg-surface/80 transition-colors">
             <Search className="w-3.5 h-3.5 text-slate-500" />
             <input
               autoFocus

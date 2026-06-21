@@ -205,7 +205,7 @@ function LocatePrompt({
         )}
 
         {/* Search is the primary, reliable path — it works regardless of browser geolocation. */}
-        <div className="flex items-center gap-1.5 mt-4 border border-line rounded-lg px-3 py-1.5 focus-within:border-signal/50 transition-colors">
+        <div className="search-pill flex items-center gap-1.5 mt-4 border border-line rounded-lg px-3 py-1.5 focus-within:border-signal/50 focus-within:ring-2 focus-within:ring-signal/40 transition-colors">
           <Search className="w-4 h-4 text-slate-500" />
           <input
             autoFocus
