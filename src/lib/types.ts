@@ -283,6 +283,7 @@ export interface SimRequest {
   policy: string;
   jurisdiction: string;
   agentCount: number;
+  stateCode?: string; // when set, grounds the population in live ACS for that state
 }
 
 export type RunStatus = "running" | "complete" | "error";

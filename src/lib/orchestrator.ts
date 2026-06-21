@@ -74,7 +74,7 @@ async function execute(id: string, meta: RunMeta, req: SimRequest): Promise<void
     const rng = makeRng(`${req.jurisdiction}:${req.policy}:${req.agentCount}`);
 
     // 1. ingest + analyze (awaited; may call the LLM analyst)
-    const { profile } = await loadProfile(req.jurisdiction);
+    const { profile } = await loadProfile(req.jurisdiction, req.stateCode);
     const { runPolicyAnalysis } = await import("@/mastra/agents/policy-analyst");
     const model = await runPolicyAnalysis(req.policy, req.jurisdiction);
 

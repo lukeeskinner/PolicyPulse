@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
   --color-ink: #05070e;
   --color-surface: #0b1120;
   --color-surface-2: #111a2e;
@@ -19,8 +21,12 @@ html,
 body {
   background: #05070e;
   color: #e2e8f0;
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
+
+.font-display { font-family: var(--font-grotesk), var(--font-inter), sans-serif; letter-spacing: -0.01em; }
+.font-serif-editorial { font-family: var(--font-instrument), ui-serif, Georgia, serif; }
+.font-data { font-family: var(--font-jetbrains), ui-monospace, monospace; font-feature-settings: "tnum" 1; }
 
 body {
   min-height: 100vh;
@@ -61,6 +67,18 @@ body {
   50% { opacity: 0.35; }
 }
 .pp-pulse { animation: pp-pulse 1.4s ease-in-out infinite; }
+
+/* Auto-scrolling news rail (pauses on hover) */
+@keyframes pp-vscroll {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+.pp-vscroll { animation: pp-vscroll linear infinite; }
+.pp-vscroll-host:hover .pp-vscroll { animation-play-state: paused; }
+.mask-fade-y {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
+}
 
 /* Thin custom scrollbars */
 *::-webkit-scrollbar { width: 8px; height: 8px; }

@@ -16,11 +16,13 @@ interface Props {
   onRun: (req: SimRequest) => void;
   onReset: () => void;
   status: "idle" | "running" | "complete" | "error";
+  initialPolicy?: string;
+  initialJurisdiction?: string;
 }
 
-export function PolicyConsole({ onRun, onReset, status }: Props) {
-  const [policy, setPolicy] = useState(PRESETS[0].policy);
-  const [jurisdiction, setJurisdiction] = useState(PRESETS[0].jurisdiction);
+export function PolicyConsole({ onRun, onReset, status, initialPolicy, initialJurisdiction }: Props) {
+  const [policy, setPolicy] = useState(initialPolicy ?? PRESETS[0].policy);
+  const [jurisdiction, setJurisdiction] = useState(initialJurisdiction ?? PRESETS[0].jurisdiction);
   const [agentCount, setAgentCount] = useState(60);
   const [health, setHealth] = useState<HealthState | null>(null);
 

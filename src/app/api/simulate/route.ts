@@ -11,11 +11,12 @@ export async function POST(req: NextRequest) {
   let agentCount = Number(body?.agentCount ?? 50);
   if (!Number.isFinite(agentCount)) agentCount = 50;
   agentCount = Math.max(12, Math.min(150, Math.round(agentCount)));
+  const stateCode = (body?.stateCode ?? "").toString().trim().toUpperCase() || undefined;
 
   if (!policy) {
     return Response.json({ error: "A policy description is required." }, { status: 400 });
   }
 
-  const id = runSimulation({ policy, jurisdiction, agentCount });
+  const id = runSimulation({ policy, jurisdiction, agentCount, stateCode });
   return Response.json({ runId: id });
 }

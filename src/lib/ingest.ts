@@ -1,4 +1,6 @@
 import { getBaseProfile, sourcesFor } from "./demographics";
+import { fetchStateCensusProfile } from "./sources/census";
+import { stateByAbbr, stateByName } from "./states";
 import type { DemographicProfile, SourceRef } from "./types";
 
 // ============================================================================
@@ -17,7 +19,38 @@ export interface IngestResult {
   live: boolean;
 }
 
-export async function loadProfile(jurisdiction: string): Promise<IngestResult> {
+// Resolve a 2-letter state code from a free-text jurisdiction
+// ("Oakland, CA", "California", "Oakland, California").
+function deriveStateCode(jurisdiction: string): string | undefined {
+  const j = (jurisdiction || "").trim();
+  if (!j) return undefined;
+  const m = j.match(/,\s*([A-Za-z]{2})\b/);
+  if (m && stateByAbbr(m[1])) return m[1].toUpperCase();
+  const whole = stateByName(j);
+  if (whole) return whole.abbr;
+  const parts = j.split(",");
+  const last = parts[parts.length - 1]?.trim();
+  return stateByName(last)?.abbr;
+}
+
+export async function loadProfile(
+  jurisdiction: string,
+  stateCode?: string,
+): Promise<IngestResult> {
+  // 1) Prefer live U.S. Census ACS whenever we can resolve a state.
+  const code = (stateCode || deriveStateCode(jurisdiction))?.toUpperCase();
+  if (code && stateByAbbr(code)) {
+    try {
+      const censusProfile = await fetchStateCensusProfile(code);
+      if (censusProfile) {
+        return { profile: censusProfile, sources: censusProfile.sources, live: true };
+      }
+    } catch {
+      /* fall back to the offline dataset below */
+    }
+  }
+
+  // 2) Fallback: curated dataset / national synthesis (clearly labeled).
   const profile = getBaseProfile(jurisdiction);
   profile.sources = sourcesFor(profile);
 

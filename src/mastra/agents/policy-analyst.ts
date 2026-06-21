@@ -3,7 +3,7 @@ import { heuristicPolicyModel } from "@/lib/policy";
 import { analystSchema, toPolicyModel } from "@/lib/schemas";
 import type { PolicyModel } from "@/lib/types";
 
-const MODEL = process.env.POLICYPULSE_ANALYST_MODEL || "anthropic/claude-3-5-haiku-20241022";
+const MODEL = process.env.POLICYPULSE_ANALYST_MODEL || "anthropic/claude-haiku-4-5";
 
 export const policyAnalystAgent = new Agent({
   id: "policy-analyst",

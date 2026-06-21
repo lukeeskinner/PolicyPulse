@@ -4,7 +4,7 @@ import { templateNarrative } from "@/lib/narrative";
 import type { AgentRecord, PolicyModel } from "@/lib/types";
 import { fmtPct, fmtUSD } from "@/lib/utils";
 
-const MODEL = process.env.POLICYPULSE_RESIDENT_MODEL || "anthropic/claude-3-5-haiku-20241022";
+const MODEL = process.env.POLICYPULSE_RESIDENT_MODEL || "anthropic/claude-haiku-4-5";
 
 export const residentAgent = new Agent({
   id: "resident",
