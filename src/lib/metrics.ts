@@ -318,5 +318,6 @@ export function analyze(
     unintended,
     whoGetsHurt,
     winners,
+    byGroup,
   };
 }
