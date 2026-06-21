@@ -165,7 +165,12 @@ function applyEvent(draft: SimState, e: SimEvent) {
     case "cascade":
       draft.cascades = [...draft.cascades, e.cascade];
       pushTicker(draft, {
-        tone: e.cascade.kind === "landlord_exit" || e.cascade.kind === "business_closed" ? "bad" : "warn",
+        tone:
+          e.cascade.kind === "landlord_exit" ||
+          e.cascade.kind === "business_closed" ||
+          e.cascade.kind === "redevelopment"
+            ? "bad"
+            : "warn",
         text: e.cascade.description,
         round: e.cascade.round,
       });
@@ -279,6 +284,20 @@ export function useSimulation() {
         draft.cascades = snap.cascades ?? [];
         draft.analysis = snap.analysis;
         draft.snapshot = snap;
+
+        // Rebuild the live-feed log from the persisted cascades so a shared
+        // permalink shows the real second-order effects, not a blank feed.
+        draft.ticker = (snap.cascades ?? [])
+          .map((c) => ({
+            id: `t${tickerSeq++}`,
+            tone:
+              c.kind === "landlord_exit" || c.kind === "business_closed" || c.kind === "redevelopment"
+                ? ("bad" as const)
+                : ("warn" as const),
+            text: c.description,
+            round: c.round,
+          }))
+          .reverse();
 
         const recById = new Map(snap.agents.map((a) => [a.persona.id, a]));
         draft.agentIndex = {};

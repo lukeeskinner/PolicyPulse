@@ -1,15 +1,18 @@
 @import "tailwindcss";
 
-@theme inline {
+@theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif, sans-serif;
   --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
   --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
 
   /* Civic Instrument palette — warm graphite ink + a single ink-blue "signal".
-     The vivid data colors (emerald / rose / amber + demographic group hues)
-     are deliberately left to Tailwind defaults so saturated color always
-     means something. The chrome stays near-monochrome on purpose. */
+     These are CONCRETE colors (so Tailwind can still apply /opacity modifiers
+     via color-mix), and we simply override the same --color-* variables under
+     [data-theme="light"] below — so bg-ink/80, text-signal, border-line, etc.
+     re-theme with no component changes. Dark is unchanged from before. The
+     vivid data colors (emerald / rose / amber + demographic hues) stay on
+     Tailwind's ramps; light mode only deepens the few shades used as text. */
   --color-ink: #0b0d12;
   --color-surface: #14171f;
   --color-surface-2: #191d27;
@@ -21,14 +24,71 @@
   --color-state: #c084fc;
 }
 
+/* ---- Dark is the default — it fits the live-map / civic-intelligence vibe -- */
 :root {
   color-scheme: dark;
+  --body-fg: #dfe3ec;
+  --glass-from: rgba(25, 29, 39, 0.66);
+  --glass-to: rgba(16, 19, 26, 0.72);
+  --grid-line: rgba(148, 163, 184, 0.05);
+  --eyebrow-fg: #6b7689;
+  --selection-bg: rgba(110, 139, 255, 0.28);
+  --selection-fg: #f4f6ff;
+  --body-wash: rgba(110, 139, 255, 0.07);
+}
+
+/* ---- Light theme: warm off-white, deep-navy ink, clean translucent glass --- */
+html[data-theme="light"] {
+  color-scheme: light;
+  --color-ink: #f4f6fb;            /* warm pale slate page */
+  --color-surface: #ffffff;
+  --color-surface-2: #eef1f8;
+  --color-line: #d7dde9;           /* soft slate borders */
+  --color-signal: #4f63e0;         /* deepened so light button text reads on it */
+  --color-signal-bright: #3a49c0;  /* deep-blue accent text, readable on white */
+  --color-accent: #4f63e0;
+  --color-federal: #4f63e0;
+  --color-state: #8b5cf6;
+
+  --body-fg: #1b2438;              /* deep navy ink */
+  --glass-from: rgba(255, 255, 255, 0.86);
+  --glass-to: rgba(246, 248, 252, 0.74);
+  --grid-line: rgba(30, 41, 59, 0.05);
+  --eyebrow-fg: #5a6478;
+  --selection-bg: rgba(79, 99, 224, 0.22);
+  --selection-fg: #0d1424;
+  --body-wash: rgba(79, 99, 224, 0.06);
+
+  /* Re-map the slate ramp the chrome leans on. 50–600 are used as TEXT (so they
+     deepen to navy); 700–800 are used as fills / skeletons / track bars (so they
+     lighten). 900 / 950 are intentionally left dark — they're printed on top of
+     saturated swatches and map pins. */
+  --color-slate-50: #0e1626;
+  --color-slate-100: #18213a;
+  --color-slate-200: #243150;
+  --color-slate-300: #3a4866;
+  --color-slate-400: #4d5c79;
+  --color-slate-500: #586480;
+  --color-slate-600: #66728d;
+  --color-slate-700: #c4ccda;
+  --color-slate-800: #dde3ec;
+
+  /* Semantic foreground shades used in the simulator — deepen so they read on
+     white while staying recognisably emerald / rose / amber / blue / purple. */
+  --color-emerald-300: #047857;
+  --color-emerald-400: #059669;
+  --color-rose-300: #be123c;
+  --color-rose-400: #e11d48;
+  --color-amber-300: #b45309;
+  --color-amber-400: #d97706;
+  --color-blue-300: #1d4ed8;
+  --color-purple-300: #7e22ce;
 }
 
 html,
 body {
   background: var(--color-ink);
-  color: #dfe3ec;
+  color: var(--body-fg);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -36,13 +96,20 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   /* a single faint signal wash from the top-right — no twin AI gradient */
-  background-image: radial-gradient(72rem 52rem at 90% -14%, rgba(110, 139, 255, 0.07), transparent 62%);
+  background-image: radial-gradient(72rem 52rem at 90% -14%, var(--body-wash), transparent 62%);
   background-attachment: fixed;
 }
 
 ::selection {
-  background: rgba(110, 139, 255, 0.28);
-  color: #f4f6ff;
+  background: var(--selection-bg);
+  color: var(--selection-fg);
+}
+
+/* Smooth, subtle cross-theme transition on the big surfaces (respects RM). */
+@media (prefers-reduced-motion: no-preference) {
+  html { transition: background-color 0.3s ease; }
+  body { transition: background-color 0.3s ease, color 0.3s ease; }
+  .glass { transition: background 0.3s ease, border-color 0.3s ease; }
 }
 
 /* --- Type roles -------------------------------------------------------- */
@@ -57,12 +124,12 @@ body {
   line-height: 1;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #6b7689;
+  color: var(--eyebrow-fg);
 }
 
 /* --- Instrument panel surface (kept named .glass for drop-in reuse) ---- */
 .glass {
-  background: linear-gradient(180deg, rgba(25, 29, 39, 0.66), rgba(16, 19, 26, 0.72));
+  background: linear-gradient(180deg, var(--glass-from), var(--glass-to));
   border: 1px solid var(--color-line);
   backdrop-filter: blur(8px);
 }
@@ -70,8 +137,8 @@ body {
 /* Hairline measurement grid behind simulation/idle stages. */
 .grid-bg {
   background-image:
-    linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 30px 30px;
 }
 
@@ -86,6 +153,13 @@ body {
   border-radius: 5px;
 }
 
+/* Search pills (ZIP / city) show focus on the wrapper via a rounded ring + border.
+   The bare inner <input>'s offset outline pokes out of the rounded pill, so opt
+   it out here — the wrapper ring is the focus indicator and it fits the shape. */
+.search-pill input:focus-visible {
+  outline: none;
+}
+
 /* --- Motion ------------------------------------------------------------ */
 @keyframes pp-pop {
   0% { transform: scale(0); opacity: 0; }
@@ -93,6 +167,14 @@ body {
   100% { transform: scale(1); opacity: 1; }
 }
 .pp-pop { animation: pp-pop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* "Point to locate" dwell ring — fills over the dwell window (keep in sync
+   with DWELL_MS in PulseMap.tsx). --pp-ring-c is the circle circumference. */
+@keyframes pp-dwell-ring {
+  from { stroke-dashoffset: var(--pp-ring-c, 113); }
+  to { stroke-dashoffset: 0; }
+}
+.pp-dwell-ring { animation: pp-dwell-ring 800ms linear forwards; }
 
 @keyframes pp-pulse {
   0%, 100% { opacity: 1; }
@@ -148,6 +230,16 @@ body {
   mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
 }
 
+/* --- Theme toggle: a tasteful Sun/Moon crossfade + rotate ---------------- */
+.theme-icon { position: absolute; }
+.theme-icon-sun { opacity: 0; transform: rotate(-90deg) scale(0.5); }
+.theme-icon-moon { opacity: 1; transform: rotate(0deg) scale(1); }
+html[data-theme="light"] .theme-icon-sun { opacity: 1; transform: rotate(0deg) scale(1); }
+html[data-theme="light"] .theme-icon-moon { opacity: 0; transform: rotate(90deg) scale(0.5); }
+@media (prefers-reduced-motion: no-preference) {
+  .theme-icon { transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.4, 0, 0.2, 1); }
+}
+
 /* Thin custom scrollbars */
 *::-webkit-scrollbar { width: 8px; height: 8px; }
 *::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.2); border-radius: 9999px; }
@@ -155,7 +247,7 @@ body {
 *::-webkit-scrollbar-track { background: transparent; }
 
 @media (prefers-reduced-motion: reduce) {
-  .pp-pop, .pp-pulse, .pp-scroll-x, .pp-vscroll, .gp-flow, .gp-ping, .gp-scan, .gp-breathe, .gp-flash, .animate-ping, .animate-spin, .animate-pulse {
+  .pp-pop, .pp-pulse, .pp-scroll-x, .pp-vscroll, .pp-dwell-ring, .gp-flow, .gp-ping, .gp-scan, .gp-breathe, .gp-flash, .animate-ping, .animate-spin, .animate-pulse {
     animation: none !important;
   }
 }

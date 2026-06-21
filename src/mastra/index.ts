@@ -1,4 +1,5 @@
 import { Mastra } from "@mastra/core/mastra";
+import { advocateAgent } from "./agents/advocate";
 import { policyAnalystAgent } from "./agents/policy-analyst";
 import { residentAgent } from "./agents/resident";
 import { ghostReasoningAgent } from "./agents/ghost";
@@ -12,6 +13,7 @@ export const mastra = new Mastra({
   agents: {
     policyAnalyst: policyAnalystAgent,
     resident: residentAgent,
+    advocate: advocateAgent,
     ghostReasoner: ghostReasoningAgent,
   },
   workflows: {

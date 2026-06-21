@@ -6,19 +6,30 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Check, Cpu, FlaskConical, FlaskRound, Gavel, Ghost, Layers, LineChart, Link2, Map as MapIcon, ScatterChart, Users2 } from "lucide-react";
 import { PulseMark, PulseLine } from "@/components/Brand";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { AgentDrawer } from "@/components/AgentDrawer";
 import { AgentGrid } from "@/components/AgentGrid";
+import { ContactRep } from "@/components/ContactRep";
 import { EventTicker } from "@/components/EventTicker";
 import { InequalitySpotlight } from "@/components/InequalitySpotlight";
 import { IngestionPanel } from "@/components/IngestionPanel";
 import { MetricsTimeline } from "@/components/MetricsTimeline";
 import { PolicyConsole } from "@/components/PolicyConsole";
+import { stateByName } from "@/lib/states";
 import { groupColor, OUTCOME_COLORS, OUTCOME_LABEL, PHASE_LABEL } from "@/lib/ui";
 import { useSimulation } from "@/lib/useSimulation";
 import { cn } from "@/lib/utils";
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08, delayChildren: 0.03 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const } } };
+
+// The policy text arriving from the Pulse Map is "IDENTIFIER — Title". Split it
+// back apart for the email draft; pasted free-text bills have no identifier.
+function splitBill(policy: string, modelTitle?: string): { identifier: string; title: string } {
+  const m = policy.match(/^(.+?)\s+—\s+(.+)$/);
+  if (m) return { identifier: m[1].trim(), title: m[2].trim() };
+  return { identifier: "this bill", title: modelTitle || policy.slice(0, 90) };
+}
 
 export default function SimulatePage() {
   return (
@@ -65,10 +76,14 @@ function SimulateDashboard() {
 
   const active = state.status !== "idle";
   const analysisReady = state.status === "complete" && !!state.analysis;
+  // Prefer the analysis's post-finalize per-group metrics (impactScore is only
+  // populated at finalize). Fall back to the latest round's group metrics.
   const byGroup =
+    (state.analysis?.byGroup?.length ? state.analysis.byGroup : undefined) ??
     [...(state.snapshot?.metricsByRound ?? state.metrics)]
       .sort((a, b) => b.round - a.round)
-      .find((m) => m.byGroup.length > 0)?.byGroup ?? [];
+      .find((m) => m.byGroup.length > 0)?.byGroup ??
+    [];
 
   return (
     <div className="min-h-screen">
@@ -77,7 +92,7 @@ function SimulateDashboard() {
           <Link href="/" className="flex items-center gap-3 group">
             <PulseMark className="w-9 h-9" live={active} />
             <div>
-              <h1 className="font-display text-base font-semibold tracking-tight text-slate-50 leading-none group-hover:text-white">
+              <h1 className="font-display text-base font-semibold tracking-tight text-slate-50 leading-none group-hover:text-slate-50">
                 Policy<span className="text-signal-bright">Pulse</span> <span className="text-slate-600 font-normal">/ Simulator</span>
               </h1>
               <p className="eyebrow mt-1.5">Stress-test a bill on a digital twin</p>
@@ -92,6 +107,7 @@ function SimulateDashboard() {
             <NavPill href="/lab" icon={<Layers className="w-3.5 h-3.5" />} label="Lab" />
             <NavPill href="/runs" icon={<FlaskRound className="w-3.5 h-3.5" />} label="Runs" />
             <NavPill href="/validate" icon={<FlaskConical className="w-3.5 h-3.5" />} label="Validation" />
+            <ThemeToggle />
           </div>
         </div>
         <PulseLine width={2000} height={20} className="absolute inset-x-0 -bottom-px h-5 opacity-70" />
@@ -123,7 +139,7 @@ function SimulateDashboard() {
             <motion.div variants={item} className="col-span-12 lg:col-span-3">
               {active ? (
                 <div className="lg:sticky lg:top-[72px] h-[520px] lg:h-[calc(100vh-92px)]">
-                  <EventTicker items={state.ticker} />
+                  <EventTicker items={state.ticker} status={state.status} analysis={state.analysis} />
                 </div>
               ) : (
                 <TwinPreview />
@@ -133,8 +149,29 @@ function SimulateDashboard() {
         </div>
 
         {analysisReady && state.analysis && (
-          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="mt-4">
+          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="mt-4 space-y-4">
             <InequalitySpotlight analysis={state.analysis} byGroup={byGroup} onSelectAgent={setSelected} />
+            {(() => {
+              const policyText = state.meta?.policy ?? initialPolicy ?? "";
+              const jurisdiction = state.meta?.jurisdiction ?? initialJurisdiction ?? "our community";
+              const stateCode = params.get("state") || stateByName(jurisdiction)?.abbr || undefined;
+              const latParam = params.get("lat");
+              const lngParam = params.get("lng");
+              const lat = latParam ? Number(latParam) : undefined;
+              const lng = lngParam ? Number(lngParam) : undefined;
+              const { identifier, title } = splitBill(policyText, state.policyModel?.title);
+              return (
+                <ContactRep
+                  stateCode={stateCode}
+                  lat={Number.isFinite(lat) ? lat : undefined}
+                  lng={Number.isFinite(lng) ? lng : undefined}
+                  jurisdiction={jurisdiction}
+                  billIdentifier={identifier}
+                  billTitle={title}
+                  analysis={state.analysis!}
+                />
+              );
+            })()}
           </motion.div>
         )}
       </main>

@@ -79,15 +79,30 @@ function featureToArea(
   };
 }
 
-export async function reverseGeocode(lat: number, lng: number): Promise<UserArea | null> {
-  const t = token();
-  if (!t) return null;
-  const url = `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${lng}&latitude=${lat}&types=place,region&limit=1&access_token=${t}`;
+async function reverseLookup(
+  lat: number,
+  lng: number,
+  types: string,
+  t: string,
+): Promise<UserArea | null> {
+  const url = `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${lng}&latitude=${lat}&types=${types}&limit=1&access_token=${t}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!res.ok) return null;
   const data = (await res.json()) as { features?: MapboxFeature[] };
   const f = data.features?.[0];
   return f ? featureToArea(f, lat, lng, "geolocation") : null;
+}
+
+export async function reverseGeocode(lat: number, lng: number): Promise<UserArea | null> {
+  const t = token();
+  if (!t) return null;
+  // First ask for place + region so we get a city *and* a 2-letter regionCode
+  // in one call. Everything downstream (bills, news, census) keys off
+  // regionCode, so if that primary lookup yields no region (rural / offshore /
+  // missing context), fall back to a region-only lookup to recover the state.
+  const primary = await reverseLookup(lat, lng, "place,region", t);
+  if (primary) return primary;
+  return reverseLookup(lat, lng, "region", t);
 }
 
 export async function forwardGeocode(q: string): Promise<UserArea | null> {

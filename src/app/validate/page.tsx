@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowDown, ArrowUp, ExternalLink, FlaskRound, Gavel, Ghost, Layers, Map as MapIcon, Minus, Play } from "lucide-react";
 import { AppHeader, NavPill } from "@/components/AppHeader";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import type { ActualMetric, HistoricalCase } from "@/lib/historical";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,7 @@ export default function ValidatePage() {
         <NavPill href="/council" icon={<Gavel className="w-3.5 h-3.5" />} label="Council" />
         <NavPill href="/lab" icon={<Layers className="w-3.5 h-3.5" />} label="Lab" />
         <NavPill href="/runs" icon={<FlaskRound className="w-3.5 h-3.5" />} label="Runs" />
+        <ThemeToggle />
       </AppHeader>
 
       <main className="max-w-[1100px] mx-auto px-4 lg:px-6 py-6 pb-16">

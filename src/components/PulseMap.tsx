@@ -1,11 +1,12 @@
 "use client";
 
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Map, { Marker, useControl, type MapRef } from "react-map-gl/mapbox";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { ArcLayer } from "@deck.gl/layers";
-import { MapPin, Landmark } from "lucide-react";
+import type { MapMouseEvent } from "mapbox-gl";
+import { AlertTriangle, Check, Crosshair, Landmark, Loader2, MapPin } from "lucide-react";
 import type { PolicyArc, PolicyMarker, PulseGeo, UserArea } from "@/lib/civic";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -27,15 +28,100 @@ function DeckOverlay(props: OverlayProps) {
   return null;
 }
 
+// --- "Click to locate" tuning ----------------------------------------------
+const DONE_HOLD_MS = 1800; // how long the "Area set" confirmation lingers
+const ERROR_HOLD_MS = 2800;
+
+type ScanStatus = "scanning" | "done" | "error";
+interface ScanState {
+  status: ScanStatus;
+  label: string;
+}
+
+function shortLabel(a: UserArea): string {
+  return a.city ? `${a.city}, ${a.regionCode}` : a.region;
+}
+
 interface PulseMapProps {
   geo: PulseGeo;
   area: UserArea | null;
   selectedId: string | null;
   onSelect: (marker: PolicyMarker | null) => void;
+  // Reverse-geocode a map point and set the area; returns the resolved area
+  // (or null). Centralised in usePulse so the component owns no Mapbox logic.
+  onPointToLocate?: (lat: number, lng: number) => Promise<UserArea | null>;
 }
 
-export function PulseMap({ geo, area, selectedId, onSelect }: PulseMapProps) {
+export function PulseMap({ geo, area, selectedId, onSelect, onPointToLocate }: PulseMapProps) {
   const mapRef = useRef<MapRef | null>(null);
+  // The map stays dark in both themes — it reads as a live "instrument" panel
+  // and avoids a style reload (and its transient fetch) on every theme toggle.
+
+  // A real hover pointer gets a precise follower reticle; click-to-locate works
+  // on any device (incl. touch tap). Computed lazily so it runs client-side
+  // without a setState-in-effect.
+  const [hoverCapable] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(hover: hover) and (pointer: fine)").matches,
+  );
+  const canLocate = !!onPointToLocate;
+
+  const [hovering, setHovering] = useState(false);
+  const [scan, setScan] = useState<ScanState | null>(null);
+
+  const reticleRef = useRef<HTMLDivElement | null>(null);
+  const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scanSeq = useRef(0); // bumps per scan so a stale result can't overwrite a newer one
+
+  const scheduleDismiss = useCallback((ms: number) => {
+    if (dismissTimer.current) clearTimeout(dismissTimer.current);
+    dismissTimer.current = setTimeout(() => setScan(null), ms);
+  }, []);
+
+  // Follow the pointer EXACTLY via a direct transform write (no React state, no
+  // movement threshold) so the reticle sits pixel-perfect under the cursor.
+  const handleMove = useCallback(
+    (e: MapMouseEvent) => {
+      if (!hoverCapable) return;
+      const el = reticleRef.current;
+      if (el) el.style.transform = `translate(${e.point.x}px, ${e.point.y}px) translate(-50%, -50%)`;
+      if (!hovering) setHovering(true);
+    },
+    [hoverCapable, hovering],
+  );
+
+  const handleLeave = useCallback(() => setHovering(false), []);
+
+  // Geocode ONLY on an explicit click, using the exact clicked lng/lat.
+  const handleClick = useCallback(
+    (e: MapMouseEvent) => {
+      onSelect(null); // close any open policy detail
+      if (!onPointToLocate) return;
+      const seq = ++scanSeq.current;
+      if (dismissTimer.current) clearTimeout(dismissTimer.current);
+      setScan({ status: "scanning", label: "Scanning this area\u2026" });
+      onPointToLocate(e.lngLat.lat, e.lngLat.lng).then((resolved) => {
+        if (scanSeq.current !== seq) return; // superseded by a newer click
+        if (resolved) {
+          setScan({ status: "done", label: `Area set: ${shortLabel(resolved)}` });
+          scheduleDismiss(DONE_HOLD_MS);
+        } else {
+          setScan({ status: "error", label: "Couldn\u2019t read that spot \u2014 search instead" });
+          scheduleDismiss(ERROR_HOLD_MS);
+        }
+      });
+    },
+    [onPointToLocate, onSelect, scheduleDismiss],
+  );
+
+  useEffect(
+    () => () => {
+      if (dismissTimer.current) clearTimeout(dismissTimer.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (area && mapRef.current) {
@@ -79,7 +165,10 @@ export function PulseMap({ geo, area, selectedId, onSelect }: PulseMapProps) {
         projection={{ name: "mercator" }}
         attributionControl={false}
         reuseMaps
-        onClick={() => onSelect(null)}
+        cursor={canLocate ? "crosshair" : "grab"}
+        onClick={handleClick}
+        onMouseMove={handleMove}
+        onMouseOut={handleLeave}
         style={{ width: "100%", height: "100%" }}
       >
         <DeckOverlay interleaved={false} layers={layers} />
@@ -109,7 +198,54 @@ export function PulseMap({ geo, area, selectedId, onSelect }: PulseMapProps) {
         ))}
       </Map>
 
+      {/* Pixel-exact follower reticle (hover devices). The OS crosshair marks the
+          precise point; this ring is the scanner accent and pulses while scanning. */}
+      {hoverCapable && (
+        <div
+          ref={reticleRef}
+          aria-hidden
+          className={`absolute left-0 top-0 w-10 h-10 z-20 pointer-events-none transition-opacity duration-200 ${hovering ? "opacity-100" : "opacity-0"}`}
+          style={{ transform: "translate(-9999px, -9999px)" }}
+        >
+          <span className="absolute inset-0 rounded-full border" style={{ borderColor: "var(--color-signal-bright)", opacity: 0.6 }} />
+          {scan?.status === "scanning" && (
+            <span className="absolute inset-0 rounded-full border-2 animate-ping" style={{ borderColor: "var(--color-signal-bright)" }} />
+          )}
+        </div>
+      )}
+
+      {/* Single top-center message slot: scan status if active, else the click hint. */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-max max-w-[calc(100%-1.5rem)]">
+        {scan ? <ScanPill status={scan.status} label={scan.label} /> : canLocate ? <ClickHint /> : null}
+      </div>
+
       <MapLegend />
+    </div>
+  );
+}
+
+function ScanPill({ status, label }: { status: ScanStatus; label: string }) {
+  // Border carries the semantic tone; the label stays neutral (text-slate-100)
+  // so it reads on both the dark and the light glass.
+  const tone =
+    status === "done" ? "border-emerald-400/40" : status === "error" ? "border-amber-400/40" : "border-signal/40";
+  return (
+    <div className={`pp-pop glass rounded-full border ${tone} text-slate-100 pl-2.5 pr-3 py-1.5 flex items-center gap-2 shadow-lg`}>
+      <span className="flex items-center justify-center w-4 h-4 shrink-0">
+        {status === "scanning" && <Loader2 className="w-4 h-4 text-signal-bright animate-spin" />}
+        {status === "done" && <Check className="w-4 h-4 text-emerald-300" />}
+        {status === "error" && <AlertTriangle className="w-4 h-4 text-amber-300" />}
+      </span>
+      <span className="text-[12px] font-medium whitespace-nowrap">{label}</span>
+    </div>
+  );
+}
+
+function ClickHint() {
+  return (
+    <div className="glass rounded-full border border-line/80 px-3 py-1.5 flex items-center gap-2 opacity-85">
+      <Crosshair className="w-3.5 h-3.5 text-signal-bright" />
+      <span className="text-[11px] text-slate-300 whitespace-nowrap">Click anywhere on the map to scan that area</span>
     </div>
   );
 }
