@@ -4,12 +4,12 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Crosshair, FlaskRound, Ghost, Landmark, Layers, Loader2, Radar, Search } from "lucide-react";
+import { AlertTriangle, ArrowRight, Crosshair, FlaskRound, Ghost, Landmark, Layers, Loader2, Radar, Search } from "lucide-react";
 import { PulseMark, PulseLine } from "@/components/Brand";
 import { LocationBadge } from "@/components/LocationBadge";
 import { NewsRail } from "@/components/NewsRail";
 import { PolicyDetail } from "@/components/PolicyDetail";
-import type { Bill, SourceState, UserArea } from "@/lib/civic";
+import type { Bill, LocationError, SourceState, UserArea } from "@/lib/civic";
 import { usePulse, type PulseSnapshot } from "@/lib/usePulse";
 
 const HAS_MAP = !!process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -58,6 +58,7 @@ export default function Home() {
             <LocationBadge
               area={snapshot.area}
               locating={snapshot.locating}
+              error={snapshot.locationError}
               onSearch={search}
               onUseLocation={locate}
             />
@@ -103,7 +104,7 @@ export default function Home() {
             />
             <PolicyDetail marker={selected} onClose={() => setSelectedId(null)} onSimulate={simulate} />
             {HAS_MAP && !snapshot.area && !snapshot.locating && (
-              <LocatePrompt onUseLocation={locate} onSearch={search} />
+              <LocatePrompt onUseLocation={locate} onSearch={search} error={snapshot.locationError} />
             )}
           </div>
 
@@ -151,27 +152,39 @@ function HeroLine({ area, totalBills, loading }: { area: UserArea | null; totalB
   );
 }
 
-function LocatePrompt({ onUseLocation, onSearch }: { onUseLocation: () => void; onSearch: (q: string) => void }) {
+function LocatePrompt({
+  onUseLocation,
+  onSearch,
+  error,
+}: {
+  onUseLocation: () => void;
+  onSearch: (q: string) => void;
+  error: LocationError | null;
+}) {
   const [q, setQ] = useState("");
   return (
     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
       <div className="glass rounded-2xl p-6 max-w-sm text-center pointer-events-auto">
         <div className="w-12 h-12 rounded-2xl bg-signal/15 flex items-center justify-center mx-auto mb-3">
-          <Crosshair className="w-6 h-6 text-signal-bright" />
+          <Search className="w-6 h-6 text-signal-bright" />
         </div>
         <h3 className="font-display text-lg text-slate-100">Find the bills around you</h3>
         <p className="text-sm text-slate-400 mt-1.5">
-          Share your location or enter a ZIP / city to map the real legislation moving near you.
+          Enter a ZIP code or city to map the real legislation moving near you.
         </p>
-        <button
-          onClick={onUseLocation}
-          className="w-full flex items-center justify-center gap-1.5 text-sm font-medium text-ink bg-signal hover:bg-signal-bright rounded-lg px-3 py-2 mt-4 transition-colors"
-        >
-          <Crosshair className="w-4 h-4" /> Use my location
-        </button>
-        <div className="flex items-center gap-1.5 mt-2 border border-line rounded-lg px-3 py-1.5 focus-within:border-signal/50 transition-colors">
+
+        {error && (
+          <div className="flex items-start gap-2 text-left mt-3 rounded-lg border border-amber-400/30 bg-amber-400/5 px-3 py-2">
+            <AlertTriangle className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
+            <p className="text-[12px] leading-relaxed text-amber-100/90">{error.message}</p>
+          </div>
+        )}
+
+        {/* Search is the primary, reliable path — it works regardless of browser geolocation. */}
+        <div className="flex items-center gap-1.5 mt-4 border border-line rounded-lg px-3 py-1.5 focus-within:border-signal/50 transition-colors">
           <Search className="w-4 h-4 text-slate-500" />
           <input
+            autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onSearch(q)}
@@ -185,6 +198,13 @@ function LocatePrompt({ onUseLocation, onSearch }: { onUseLocation: () => void; 
             Go
           </button>
         </div>
+
+        <button
+          onClick={onUseLocation}
+          className="w-full flex items-center justify-center gap-1.5 text-sm font-medium text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-lg px-3 py-2 mt-2 transition-colors"
+        >
+          <Crosshair className="w-4 h-4" /> Use my location
+        </button>
       </div>
     </div>
   );

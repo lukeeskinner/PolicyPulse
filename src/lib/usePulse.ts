@@ -1,8 +1,34 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { buildPulseGeo, type Bill, type NewsArticle, type PulseGeo, type SourceState, type UserArea } from "./civic";
+import {
+  buildPulseGeo,
+  type Bill,
+  type LocationError,
+  type LocationErrorKind,
+  type NewsArticle,
+  type PulseGeo,
+  type SourceState,
+  type UserArea,
+} from "./civic";
 import type { DemographicProfile } from "./types";
+
+// Human-readable, actionable copy for every way locating can fail. Each one
+// points the user at the ZIP/city search, which works regardless of browser geo.
+const LOCATION_MESSAGES: Record<LocationErrorKind, string> = {
+  unsupported: "This browser can't share your location — search by ZIP or city instead.",
+  insecure:
+    "Location only works on a secure connection. Open the app at http://localhost:3000 (or HTTPS) — or just search by ZIP or city.",
+  denied: "Location access is blocked. Allow it in your browser settings, or search by ZIP or city.",
+  unavailable: "Your location is unavailable right now — search by ZIP or city instead.",
+  timeout: "Finding your location took too long — search by ZIP or city instead.",
+  notfound: 'Couldn\'t match that to a U.S. state. Try a ZIP code or "City, State".',
+  missing_key: "Location lookup isn't configured yet (missing Mapbox token).",
+};
+
+function makeLocationError(kind: LocationErrorKind): LocationError {
+  return { kind, message: LOCATION_MESSAGES[kind] };
+}
 
 // ============================================================================
 // usePulse — drives the live homepage.
@@ -24,6 +50,7 @@ export interface PulseSnapshot {
   area: UserArea | null;
   locating: boolean;
   needsLocation: boolean;
+  locationError: LocationError | null;
   federal: Bill[];
   state: Bill[];
   geo: PulseGeo;
@@ -51,6 +78,7 @@ export function usePulse() {
   const [area, setArea] = useState<UserArea | null>(null);
   const [locating, setLocating] = useState(true);
   const [needsLocation, setNeedsLocation] = useState(false);
+  const [locationError, setLocationError] = useState<LocationError | null>(null);
 
   const [federal, setFederal] = useState<Bill[]>([]);
   const [state, setStateBills] = useState<Bill[]>([]);
@@ -71,6 +99,11 @@ export function usePulse() {
 
   const resolved = useRef(false);
 
+  // Map a geocode call that produced no area onto an actionable error: a
+  // missing Mapbox token vs. simply no US match for the coords/query.
+  const errorFromStatus = (status?: SourceState): LocationError =>
+    makeLocationError(status === "missing_key" ? "missing_key" : "notfound");
+
   const resolveByCoords = useCallback(async (lat: number, lng: number) => {
     const data = await getJson<{ area: UserArea | null; status: SourceState }>(
       `/api/geo?lat=${lat}&lng=${lng}`,
@@ -79,8 +112,10 @@ export function usePulse() {
     if (data?.area) {
       setArea(data.area);
       setNeedsLocation(false);
+      setLocationError(null);
     } else {
       setNeedsLocation(true);
+      setLocationError(errorFromStatus(data?.status));
     }
     setLocating(false);
   }, []);
@@ -88,6 +123,7 @@ export function usePulse() {
   const search = useCallback(async (q: string) => {
     if (!q.trim()) return;
     setLocating(true);
+    setLocationError(null);
     const data = await getJson<{ area: UserArea | null; status: SourceState }>(
       `/api/geo?q=${encodeURIComponent(q.trim())}`,
     );
@@ -95,22 +131,46 @@ export function usePulse() {
     if (data?.area) {
       setArea(data.area);
       setNeedsLocation(false);
+      setLocationError(null);
     } else {
       setNeedsLocation(true);
+      setLocationError(errorFromStatus(data?.status));
     }
     setLocating(false);
   }, []);
 
   const locate = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setLocationError(makeLocationError("unsupported"));
+      setNeedsLocation(true);
+      setLocating(false);
+      return;
+    }
+    // Browser geolocation is blocked on insecure origins — notably the LAN IP
+    // `next dev` prints. Calling getCurrentPosition there surfaces a misleading
+    // "permission denied", so short-circuit with a clear message instead.
+    if (typeof window !== "undefined" && window.isSecureContext === false) {
+      console.warn(
+        "[usePulse] geolocation unavailable: insecure context. Use http://localhost:3000 or HTTPS.",
+      );
+      setLocationError(makeLocationError("insecure"));
       setNeedsLocation(true);
       setLocating(false);
       return;
     }
     setLocating(true);
+    setLocationError(null);
     navigator.geolocation.getCurrentPosition(
       (pos) => resolveByCoords(pos.coords.latitude, pos.coords.longitude),
-      () => {
+      (err) => {
+        const kind: LocationErrorKind =
+          err.code === err.PERMISSION_DENIED
+            ? "denied"
+            : err.code === err.TIMEOUT
+              ? "timeout"
+              : "unavailable";
+        console.warn(`[usePulse] geolocation error (code ${err.code}): ${err.message}`);
+        setLocationError(makeLocationError(kind));
         setNeedsLocation(true);
         setLocating(false);
       },
@@ -170,6 +230,7 @@ export function usePulse() {
     area,
     locating,
     needsLocation,
+    locationError,
     federal,
     state,
     geo,
