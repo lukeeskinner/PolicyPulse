@@ -51,6 +51,24 @@ export interface NewsArticle {
 
 export type SourceState = "live" | "missing_key" | "error" | "empty";
 
+// Why a location attempt failed, so the UI can show a real, actionable message
+// instead of silently reopening the manual prompt. `insecure` is the common one
+// in dev: browser geolocation is blocked on non-secure origins (the LAN IP that
+// `next dev` prints), so it only works on http://localhost or HTTPS.
+export type LocationErrorKind =
+  | "unsupported" // navigator.geolocation missing
+  | "insecure" // not a secure context (LAN IP / plain http)
+  | "denied" // user blocked the permission
+  | "unavailable" // position could not be determined
+  | "timeout" // the lookup took too long
+  | "notfound" // geocoder returned no US area for the input
+  | "missing_key"; // Mapbox token not configured
+
+export interface LocationError {
+  kind: LocationErrorKind;
+  message: string;
+}
+
 export interface PulseSources {
   congress: SourceState;
   openstates: SourceState;
