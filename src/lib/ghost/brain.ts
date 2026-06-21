@@ -1,6 +1,6 @@
-import { z } from "zod";
-import { clamp } from "@/lib/utils";
-import type { ActionKind, Advisory, AgentRole, Domain, GhostAgent, NodeKind, WorldNode } from "./types";
+import {z} from "zod";
+import {clamp} from "@/lib/utils";
+import type {ActionKind, Advisory, AgentRole, Domain, GhostAgent, NodeKind, WorldNode} from "./types";
 
 // ============================================================================
 // Ghost Protocol "brain" — every decision is a real Claude call.
@@ -14,7 +14,7 @@ import type { ActionKind, Advisory, AgentRole, Domain, GhostAgent, NodeKind, Wor
 // honestly (an agent holds; a run errors) rather than inventing data.
 // ============================================================================
 
-const MODEL = process.env.POLICYPULSE_GHOST_MODEL || process.env.POLICYPULSE_ANALYST_MODEL || "anthropic/claude-haiku-4-5";
+const MODEL = process.env.POLICYPULSE_GHOST_MODEL || process.env.POLICYPULSE_ANALYST_MODEL || "anthropic/claude-sonnet-4-6";
 
 export function claudeConfigured(): boolean {
   return !!process.env.ANTHROPIC_API_KEY;
@@ -36,7 +36,7 @@ function extractJson(text: string): unknown {
   }
 }
 
-async function callClaude(system: string, user: string, maxTokens: number, timeoutMs = 16000): Promise<{ text: string; latencyMs: number } | null> {
+async function callClaude(system: string, user: string, maxTokens: number, timeoutMs = 16000): Promise<{text: string; latencyMs: number} | null> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return null;
   const t0 = Date.now();
@@ -45,14 +45,14 @@ async function callClaude(system: string, user: string, maxTokens: number, timeo
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model: ghostModelId(), max_tokens: maxTokens, system, messages: [{ role: "user", content: user }] }),
+      headers: {"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+      body: JSON.stringify({model: ghostModelId(), max_tokens: maxTokens, system, messages: [{role: "user", content: user}]}),
       signal: controller.signal,
     });
     if (!res.ok) return null;
-    const data = (await res.json()) as { content?: { type: string; text?: string }[] };
+    const data = (await res.json()) as {content?: {type: string; text?: string}[]};
     const text = data.content?.map((c) => c.text ?? "").join("") ?? "";
-    return { text, latencyMs: Date.now() - t0 };
+    return {text, latencyMs: Date.now() - t0};
   } catch {
     return null;
   } finally {
@@ -60,12 +60,12 @@ async function callClaude(system: string, user: string, maxTokens: number, timeo
   }
 }
 
-async function claudeJSON<T>(system: string, user: string, schema: z.ZodType<T>, maxTokens: number): Promise<{ data: T; latencyMs: number } | null> {
+async function claudeJSON<T>(system: string, user: string, schema: z.ZodType<T>, maxTokens: number): Promise<{data: T; latencyMs: number} | null> {
   const r = await callClaude(system, user, maxTokens);
   if (!r) return null;
   const parsed = schema.safeParse(extractJson(r.text));
   if (!parsed.success) return null;
-  return { data: parsed.data, latencyMs: r.latencyMs };
+  return {data: parsed.data, latencyMs: r.latencyMs};
 }
 
 // ---------------------------------------------------------------------------
@@ -187,7 +187,7 @@ const rawActionSchema = z.object({
 const rawDecisionSchema = z.object({
   rationale: z.string(),
   considered: z.array(z.string()).optional().default([]),
-  rejected: z.array(z.object({ option: z.string(), why: z.string() })).optional().default([]),
+  rejected: z.array(z.object({option: z.string(), why: z.string()})).optional().default([]),
   action: rawActionSchema,
 });
 
@@ -201,12 +201,12 @@ export interface ProposedAction {
 export interface AgentDecision {
   rationale: string;
   considered: string[];
-  rejected: { option: string; why: string }[];
+  rejected: {option: string; why: string}[];
   action: ProposedAction;
 }
 
 function normalizeAction(a: z.infer<typeof rawActionSchema>): ProposedAction {
-  return { kind: mapActionKind(a.kind), target: a.target, source: a.source, magnitude: a.magnitude, summary: a.summary };
+  return {kind: mapActionKind(a.kind), target: a.target, source: a.source, magnitude: a.magnitude, summary: a.summary};
 }
 
 const reviewSchema = z.object({
@@ -398,13 +398,13 @@ function validateWorld(w: GeneratedWorld): boolean {
   return hasFailure && hasCritical && w.nodes.length >= 4;
 }
 
-export async function generateWorld(prompt: string, advisories: Advisory[]): Promise<{ world: GeneratedWorld; latencyMs: number } | null> {
+export async function generateWorld(prompt: string, advisories: Advisory[]): Promise<{world: GeneratedWorld; latencyMs: number} | null> {
   const user = `CRISIS PROMPT:\n${prompt}\n\nREAL THREAT ADVISORIES (live research):\n${advisoryBlock(advisories)}\n\nDesign the world now as JSON.`;
   for (let attempt = 0; attempt < 2; attempt++) {
     const r = await claudeJSON(WORLD_SYSTEM, user, rawWorldSchema, 4096);
     if (r) {
       const world = normalizeWorld(r.data);
-      if (validateWorld(world)) return { world, latencyMs: r.latencyMs };
+      if (validateWorld(world)) return {world, latencyMs: r.latencyMs};
     }
   }
   return null;
@@ -440,7 +440,7 @@ export async function decideAction(
   nodes: WorldNode[],
   threatType: string,
   recentMessages: string[],
-): Promise<{ decision: AgentDecision; latencyMs: number } | null> {
+): Promise<{decision: AgentDecision; latencyMs: number} | null> {
   const user = `THREAT: ${threatType}
 WORLD STATE (live):
 ${worldStateBlock(nodes)}
@@ -452,7 +452,7 @@ Choose your action now as JSON.`;
   const r = await claudeJSON(roleSystem(agent), user, rawDecisionSchema, 900);
   if (!r) return null;
   return {
-    decision: { rationale: r.data.rationale, considered: r.data.considered, rejected: r.data.rejected, action: normalizeAction(r.data.action) },
+    decision: {rationale: r.data.rationale, considered: r.data.considered, rejected: r.data.rejected, action: normalizeAction(r.data.action)},
     latencyMs: r.latencyMs,
   };
 }
@@ -468,7 +468,7 @@ export async function reviewProposal(
   threatenedNode: WorldNode,
   nodes: WorldNode[],
   advisories: Advisory[],
-): Promise<{ review: ProposalReview; latencyMs: number } | null> {
+): Promise<{review: ProposalReview; latencyMs: number} | null> {
   const system = `You are ${guardian.name}. Mandate: ${guardian.blurb} You have authority to VETO actions that endanger critical infrastructure. Decide whether to veto the incoming proposal. If you veto, cite a real advisory id if one applies. Output JSON: {veto:boolean, rationale, message (the structured message you send the proposer), cite?}.`;
   const user = `INCOMING PROPOSAL from ${proposerName}: ${proposalSummary}
 This action affects ${threatenedNode.label} (${threatenedNode.id})${threatenedNode.critical ? ", which is CRITICAL infrastructure" : ""}.
@@ -482,14 +482,14 @@ ${advisoryBlock(advisories)}
 Decide now as JSON.`;
   const r = await claudeJSON(system, user, reviewSchema, 600);
   if (!r) return null;
-  return { review: r.data, latencyMs: r.latencyMs };
+  return {review: r.data, latencyMs: r.latencyMs};
 }
 
 export async function counterProposal(
   proposer: GhostAgent,
   vetoMessage: string,
   nodes: WorldNode[],
-): Promise<{ counter: CounterProposal; latencyMs: number } | null> {
+): Promise<{counter: CounterProposal; latencyMs: number} | null> {
   const system = `You are ${proposer.name}. Mandate: ${proposer.blurb} Your previous proposal was vetoed on safety grounds. Recalculate an alternative action that achieves your goal WITHOUT the vetoed risk. Output JSON: {rationale, message (your acknowledgement/counter to the team), action:{kind,target?,source?,magnitude?,summary}}.`;
   const user = `VETO RECEIVED: ${vetoMessage}
 
@@ -501,7 +501,7 @@ ${priorityBlock(nodes)}
 Provide a revised, SAFE action now (use a healthy reroute source, never a critical node) as JSON.`;
   const r = await claudeJSON(system, user, rawCounterSchema, 700);
   if (!r) return null;
-  return { counter: { rationale: r.data.rationale, message: r.data.message, action: normalizeAction(r.data.action) }, latencyMs: r.latencyMs };
+  return {counter: {rationale: r.data.rationale, message: r.data.message, action: normalizeAction(r.data.action)}, latencyMs: r.latencyMs};
 }
 
 // ---------------------------------------------------------------------------
@@ -511,9 +511,9 @@ Provide a revised, SAFE action now (use a healthy reroute source, never a critic
 export async function synthesizePostMortem(input: {
   title: string;
   outcome: string;
-  trace: { tick: number; agent: string; action: string; rationale: string; conflict: boolean }[];
-  conflicts: { tick: number; description: string; by: string }[];
-}): Promise<{ data: SynthesizedPostMortem; latencyMs: number } | null> {
+  trace: {tick: number; agent: string; action: string; rationale: string; conflict: boolean}[];
+  conflicts: {tick: number; description: string; by: string}[];
+}): Promise<{data: SynthesizedPostMortem; latencyMs: number} | null> {
   const system = `You are an analyst writing the post-mortem of a multi-agent crisis response. You are given the REAL decision trace. Identify the single most consequential decision and explain it and its counterfactual. Do not invent events not in the trace. Output JSON: {headline, summary, criticalDecision:{tick, agentId, action, why, counterfactual}}.`;
   const traceBlock = input.trace.map((t) => `T${t.tick} ${t.agent}${t.conflict ? " [CONFLICT]" : ""}: ${t.action} — ${t.rationale}`).join("\n");
   const user = `CRISIS: ${input.title}
@@ -526,5 +526,5 @@ ${traceBlock}
 Write the post-mortem now as JSON.`;
   const r = await claudeJSON(system, user, postMortemSchema, 900);
   if (!r) return null;
-  return { data: r.data, latencyMs: r.latencyMs };
+  return {data: r.data, latencyMs: r.latencyMs};
 }

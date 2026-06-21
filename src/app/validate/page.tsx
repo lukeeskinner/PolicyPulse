@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowDown, ArrowUp, ExternalLink, FlaskRound, Ghost, Layers, Map as MapIcon, Minus, Play } from "lucide-react";
+import { ArrowDown, ArrowUp, ExternalLink, FlaskRound, Gavel, Ghost, Layers, Map as MapIcon, Minus, Play } from "lucide-react";
 import { AppHeader, NavPill } from "@/components/AppHeader";
 import type { ActualMetric, HistoricalCase } from "@/lib/historical";
 import { cn } from "@/lib/utils";
@@ -43,6 +43,7 @@ export default function ValidatePage() {
       <AppHeader section="Validation" subtitle="Does the model match reality?">
         <NavPill href="/" icon={<MapIcon className="w-3.5 h-3.5" />} label="Pulse Map" />
         <NavPill href="/ghost" icon={<Ghost className="w-3.5 h-3.5" />} label="Ghost" />
+        <NavPill href="/council" icon={<Gavel className="w-3.5 h-3.5" />} label="Council" />
         <NavPill href="/lab" icon={<Layers className="w-3.5 h-3.5" />} label="Lab" />
         <NavPill href="/runs" icon={<FlaskRound className="w-3.5 h-3.5" />} label="Runs" />
       </AppHeader>

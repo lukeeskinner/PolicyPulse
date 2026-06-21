@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Activity, FlaskConical, Ghost, Map as MapIcon, MessagesSquare, Network, Radio, ShieldCheck } from "lucide-react";
+import { Activity, FlaskConical, Gavel, Ghost, Map as MapIcon, MessagesSquare, Network, Radio, ShieldCheck } from "lucide-react";
 import { PulseLine, PulseMark } from "@/components/Brand";
 import { AgentPanels } from "@/components/ghost/AgentPanels";
 import { CrisisHud } from "@/components/ghost/CrisisHud";
@@ -72,6 +72,9 @@ export default function GhostPage() {
             </Link>
             <Link href="/simulate" className="hidden md:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors">
               <FlaskConical className="w-3.5 h-3.5" /> Simulator
+            </Link>
+            <Link href="/council" className="hidden md:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors">
+              <Gavel className="w-3.5 h-3.5" /> Council
             </Link>
           </div>
         </div>

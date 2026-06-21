@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Dices, FlaskConical, FlaskRound, Ghost, GitCompareArrows, Loader2, Map as MapIcon, Play, SlidersHorizontal } from "lucide-react";
+import { Dices, FlaskConical, FlaskRound, Gavel, Ghost, GitCompareArrows, Loader2, Map as MapIcon, Play, SlidersHorizontal } from "lucide-react";
 import { AppHeader, NavPill } from "@/components/AppHeader";
 import { CompareView } from "@/components/lab/CompareView";
 import { MonteCarloView } from "@/components/lab/MonteCarloView";
@@ -116,6 +116,7 @@ function Lab() {
       <AppHeader section="Lab" subtitle="Stress-test assumptions across many runs">
         <NavPill href="/" icon={<MapIcon className="w-3.5 h-3.5" />} label="Pulse Map" />
         <NavPill href="/ghost" icon={<Ghost className="w-3.5 h-3.5" />} label="Ghost" />
+        <NavPill href="/council" icon={<Gavel className="w-3.5 h-3.5" />} label="Council" />
         <NavPill href="/runs" icon={<FlaskRound className="w-3.5 h-3.5" />} label="Runs" />
         <NavPill href="/validate" icon={<FlaskConical className="w-3.5 h-3.5" />} label="Validation" />
       </AppHeader>

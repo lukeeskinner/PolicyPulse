@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Database, FlaskConical, Ghost, Layers, Map as MapIcon, Plus } from "lucide-react";
+import { ArrowRight, Database, FlaskConical, Gavel, Ghost, Layers, Map as MapIcon, Plus } from "lucide-react";
 import { AppHeader, NavPill } from "@/components/AppHeader";
 import type { RunMeta } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -53,6 +53,7 @@ export default function RunsPage() {
       <AppHeader section="Runs" subtitle="Replay & share saved simulations">
         <NavPill href="/" icon={<MapIcon className="w-3.5 h-3.5" />} label="Pulse Map" />
         <NavPill href="/ghost" icon={<Ghost className="w-3.5 h-3.5" />} label="Ghost" />
+        <NavPill href="/council" icon={<Gavel className="w-3.5 h-3.5" />} label="Council" />
         <NavPill href="/lab" icon={<Layers className="w-3.5 h-3.5" />} label="Lab" />
         <NavPill href="/validate" icon={<FlaskConical className="w-3.5 h-3.5" />} label="Validation" />
       </AppHeader>

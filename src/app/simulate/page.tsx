@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Check, Cpu, FlaskConical, FlaskRound, Ghost, Layers, LineChart, Link2, Map as MapIcon, ScatterChart, Users2 } from "lucide-react";
+import { Check, Cpu, FlaskConical, FlaskRound, Gavel, Ghost, Layers, LineChart, Link2, Map as MapIcon, ScatterChart, Users2 } from "lucide-react";
 import { PulseMark, PulseLine } from "@/components/Brand";
 import { AgentDrawer } from "@/components/AgentDrawer";
 import { AgentGrid } from "@/components/AgentGrid";
@@ -88,6 +88,7 @@ function SimulateDashboard() {
             {state.status === "complete" && state.runId && <ShareRunButton runId={state.runId} />}
             <NavPill href="/" icon={<MapIcon className="w-3.5 h-3.5" />} label="Pulse Map" />
             <NavPill href="/ghost" icon={<Ghost className="w-3.5 h-3.5" />} label="Ghost" />
+            <NavPill href="/council" icon={<Gavel className="w-3.5 h-3.5" />} label="Council" />
             <NavPill href="/lab" icon={<Layers className="w-3.5 h-3.5" />} label="Lab" />
             <NavPill href="/runs" icon={<FlaskRound className="w-3.5 h-3.5" />} label="Runs" />
             <NavPill href="/validate" icon={<FlaskConical className="w-3.5 h-3.5" />} label="Validation" />

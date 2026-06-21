@@ -1,4 +1,4 @@
-import { Agent } from "@mastra/core/agent";
+import {Agent} from "@mastra/core/agent";
 
 // ============================================================================
 // Ghost Protocol agent — registered in the Mastra instance for convention and
@@ -8,7 +8,7 @@ import { Agent } from "@mastra/core/agent";
 // errors in this environment.
 // ============================================================================
 
-const MODEL = process.env.POLICYPULSE_GHOST_MODEL || process.env.POLICYPULSE_ANALYST_MODEL || "anthropic/claude-haiku-4-5";
+const MODEL = process.env.POLICYPULSE_GHOST_MODEL || process.env.POLICYPULSE_ANALYST_MODEL || "anthropic/claude-sonnet-4-6";
 
 export const ghostReasoningAgent = new Agent({
   id: "ghost-reasoner",

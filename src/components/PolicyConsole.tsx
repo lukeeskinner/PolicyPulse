@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Play, RotateCcw, Sparkles, Database, Brain, Globe } from "lucide-react";
-import type { SimRequest } from "@/lib/types";
-import { JURISDICTIONS, PRESETS } from "@/lib/ui";
-import { cn } from "@/lib/utils";
+import {useEffect, useState} from "react";
+import {Play, RotateCcw, Sparkles, Database, Brain, Globe} from "lucide-react";
+import type {SimRequest} from "@/lib/types";
+import {JURISDICTIONS, PRESETS} from "@/lib/ui";
+import {cn} from "@/lib/utils";
 
 interface HealthState {
-  redis: { configured: boolean; connected: boolean };
+  redis: {configured: boolean; connected: boolean};
   anthropic: boolean;
   browserbase: boolean;
 }
@@ -20,7 +20,7 @@ interface Props {
   initialJurisdiction?: string;
 }
 
-export function PolicyConsole({ onRun, onReset, status, initialPolicy, initialJurisdiction }: Props) {
+export function PolicyConsole({onRun, onReset, status, initialPolicy, initialJurisdiction}: Props) {
   const [policy, setPolicy] = useState(initialPolicy ?? PRESETS[0].policy);
   const [jurisdiction, setJurisdiction] = useState(initialJurisdiction ?? PRESETS[0].jurisdiction);
   const [agentCount, setAgentCount] = useState(60);
@@ -30,7 +30,7 @@ export function PolicyConsole({ onRun, onReset, status, initialPolicy, initialJu
     fetch("/api/health")
       .then((r) => r.json())
       .then(setHealth)
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const running = status === "running";
@@ -108,7 +108,7 @@ export function PolicyConsole({ onRun, onReset, status, initialPolicy, initialJu
 
       <div className="flex gap-2 mt-5">
         <button
-          onClick={() => onRun({ policy, jurisdiction, agentCount })}
+          onClick={() => onRun({policy, jurisdiction, agentCount})}
           disabled={running || policy.trim().length < 8}
           className={cn(
             "flex-1 flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all",
@@ -131,7 +131,7 @@ export function PolicyConsole({ onRun, onReset, status, initialPolicy, initialJu
       </div>
 
       <div className="flex items-center gap-3 mt-4 pt-4 border-t border-line">
-        <Integration icon={<Brain className="w-3.5 h-3.5" />} label="Mastra · Haiku" on={!!health?.anthropic} hint={health?.anthropic ? "Live LLM agents" : "Heuristic fallback"} />
+        <Integration icon={<Brain className="w-3.5 h-3.5" />} label="Mastra · SONNET" on={!!health?.anthropic} hint={health?.anthropic ? "Live LLM agents" : "Heuristic fallback"} />
         <Integration icon={<Database className="w-3.5 h-3.5" />} label="Redis" on={!!health?.redis?.connected} hint={health?.redis?.connected ? "Connected" : "In-memory"} />
         <Integration icon={<Globe className="w-3.5 h-3.5" />} label="Browserbase" on={!!health?.browserbase} hint={health?.browserbase ? "Live crawl" : "Grounded dataset"} />
       </div>
@@ -139,7 +139,7 @@ export function PolicyConsole({ onRun, onReset, status, initialPolicy, initialJu
   );
 }
 
-function Integration({ icon, label, on, hint }: { icon: React.ReactNode; label: string; on: boolean; hint: string }) {
+function Integration({icon, label, on, hint}: {icon: React.ReactNode; label: string; on: boolean; hint: string}) {
   return (
     <div className="flex items-center gap-1.5" title={hint}>
       <span className={cn("flex items-center justify-center w-6 h-6 rounded-lg", on ? "bg-emerald-500/15 text-emerald-300" : "bg-slate-800 text-slate-500")}>

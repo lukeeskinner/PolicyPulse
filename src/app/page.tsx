@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, Crosshair, FlaskRound, Ghost, Landmark, Layers, Loader2, Radar, Search } from "lucide-react";
+import { ArrowRight, Crosshair, FlaskRound, Gavel, Ghost, Landmark, Layers, Loader2, Radar, Search } from "lucide-react";
 import { PulseMark, PulseLine } from "@/components/Brand";
 import { LocationBadge } from "@/components/LocationBadge";
 import { NewsRail } from "@/components/NewsRail";
@@ -73,6 +73,12 @@ export default function Home() {
               className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"
             >
               <Ghost className="w-3.5 h-3.5" /> Ghost Protocol
+            </Link>
+            <Link
+              href="/council"
+              className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-signal-bright border border-line hover:border-signal/50 rounded-full px-3 py-1.5 transition-colors"
+            >
+              <Gavel className="w-3.5 h-3.5" /> Council
             </Link>
             <Link
               href="/lab"
