@@ -1,20 +1,23 @@
 import {Agent} from "@mastra/core/agent";
+import {asiConfigured, callASI} from "@/lib/asi";
 import {roleLabel} from "@/lib/engine";
 import {templateNarrative} from "@/lib/narrative";
 import type {AgentRecord, PolicyModel} from "@/lib/types";
 import {fmtPct, fmtUSD} from "@/lib/utils";
 
-const MODEL = process.env.POLICYPULSE_RESIDENT_MODEL || "anthropic/claude-sonnet-4-6";
+// Resident's system prompt. Kept verbatim and shared by the Mastra Agent
+// (registered for parity) and the ASI-1 transport that actually runs it.
+const INSTRUCTIONS = `You role-play ONE specific synthetic resident living through a policy change.
+
+You will be given a factual brief: who they are, their finances, and what happened to them at Month 1, Month 6, Year 1, and Year 3.
+
+Write their story in FIRST PERSON, present-to-past tense, 90-150 words. Be grounded and specific: reference concrete numbers from the brief (rent, income, rent burden), their neighborhood, and the actual events that befell them. No melodrama, no policy advocacy, no statistics lecture — just one human voice describing how this policy reshaped their life. Do not invent facts beyond the brief.`;
 
 export const residentAgent = new Agent({
   id: "resident",
   name: "Resident",
-  instructions: `You role-play ONE specific synthetic resident living through a policy change.
-
-You will be given a factual brief: who they are, their finances, and what happened to them at Month 1, Month 6, Year 1, and Year 3.
-
-Write their story in FIRST PERSON, present-to-past tense, 90-150 words. Be grounded and specific: reference concrete numbers from the brief (rent, income, rent burden), their neighborhood, and the actual events that befell them. No melodrama, no policy advocacy, no statistics lecture — just one human voice describing how this policy reshaped their life. Do not invent facts beyond the brief.`,
-  model: MODEL,
+  instructions: INSTRUCTIONS,
+  model: process.env.POLICYPULSE_ASI_MODEL || "asi1-mini",
 });
 
 function buildBrief(record: AgentRecord, model: PolicyModel): string {
@@ -39,12 +42,12 @@ export async function narrateResident(
   record: AgentRecord,
   model: PolicyModel,
 ): Promise<{story: string; source: "llm" | "template"}> {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!asiConfigured()) {
     return {story: templateNarrative(record, model), source: "template"};
   }
   try {
-    const res = await residentAgent.generate(buildBrief(record, model));
-    const text = res.text?.trim();
+    const res = await callASI(INSTRUCTIONS, buildBrief(record, model), {maxTokens: 400, temperature: 0.8});
+    const text = res?.text?.trim();
     if (text && text.length > 40) return {story: text, source: "llm"};
   } catch {
     /* fall through to template */

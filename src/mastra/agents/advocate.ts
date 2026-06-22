@@ -1,13 +1,11 @@
 import { Agent } from "@mastra/core/agent";
+import { asiConfigured, asiJSON } from "@/lib/asi";
 import { advocateEmailSchema, toEmailDraft, type EmailDraft } from "@/lib/schemas";
 import type { Analysis } from "@/lib/types";
 
-const MODEL = process.env.POLICYPULSE_ADVOCATE_MODEL || "anthropic/claude-haiku-4-5";
-
-export const advocateAgent = new Agent({
-  id: "advocate",
-  name: "Advocate",
-  instructions: `You help a constituent write a short, respectful email to their elected representative about a specific bill.
+// Advocate's system prompt. Kept verbatim and shared by the Mastra Agent
+// (registered for parity) and the ASI-1 transport that actually runs it.
+const INSTRUCTIONS = `You help a constituent write a short, respectful email to their elected representative about a specific bill.
 
 You are given: the representative's name and title, the bill identifier and title, the jurisdiction, and the simulation's findings about which groups of residents are hurt or helped.
 
@@ -19,8 +17,13 @@ Write a constituent email that:
 - Makes one clear ask (support / oppose / amend, inferred from who bears the burden) and invites a response.
 - Is 120-200 words, plain language, no placeholders left blank, no markdown.
 
-Return ONLY the structured object with a subject and body.`,
-  model: MODEL,
+Return ONLY the structured object with a subject and body.`;
+
+export const advocateAgent = new Agent({
+  id: "advocate",
+  name: "Advocate",
+  instructions: INSTRUCTIONS,
+  model: process.env.POLICYPULSE_ASI_MODEL || "asi1-mini",
 });
 
 export interface EmailDraftInput {
@@ -106,12 +109,10 @@ function buildPrompt(input: EmailDraftInput): string {
 
 export async function draftConstituentEmail(input: EmailDraftInput): Promise<EmailDraft> {
   const fallback = templateEmail(input);
-  if (!process.env.ANTHROPIC_API_KEY) return fallback;
+  if (!asiConfigured()) return fallback;
   try {
-    const res = await advocateAgent.generate(buildPrompt(input), {
-      structuredOutput: { schema: advocateEmailSchema, errorStrategy: "warn" },
-    });
-    if (res.object) return toEmailDraft(res.object);
+    const res = await asiJSON(INSTRUCTIONS, buildPrompt(input), advocateEmailSchema, 700);
+    if (res?.data) return toEmailDraft(res.data);
     return fallback;
   } catch {
     return fallback;
